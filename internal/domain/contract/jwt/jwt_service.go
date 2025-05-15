@@ -12,8 +12,8 @@ type UserClaims struct {
 }
 
 type Service interface {
-	GenerateToken(userID uint, username string) (accessToken string, refreshToken string, refreshTokenHash string, err error)
-	ValidateToken(tokenString string) (*UserClaims, error)
+	GenerateToken(userID uuid.UUID, username string) (accessToken string, refreshToken string, refreshTokenHash string, err error)
+	ValidateToken(tokenString string, key string) (*UserClaims, error)
 	HashToken(token string) (string, error)
 	CompareTokenHash(token, hash string) error
 }
