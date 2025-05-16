@@ -6,13 +6,13 @@ import (
 )
 
 type UserClaims struct {
-	UUID     uuid.UUID `json:"uuid"`
-	Username string    `json:"username"`
+	UUID  uuid.UUID `json:"uuid"`
+	Email string    `json:"email"`
 	jwt.RegisteredClaims
 }
 
 type Service interface {
-	GenerateToken(userID uuid.UUID, username string) (accessToken string, refreshToken string, refreshTokenHash string, err error)
+	GenerateToken(userID uuid.UUID, email string) (accessToken string, refreshToken string, refreshTokenHash string, err error)
 	ValidateToken(tokenString string, key string) (*UserClaims, error)
 	HashToken(token string) (string, error)
 	CompareTokenHash(token, hash string) error

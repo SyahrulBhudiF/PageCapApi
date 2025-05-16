@@ -42,13 +42,13 @@ func NewJwtService(cfg *config.Config) jwtContract.Service {
 	}
 }
 
-func (j *jwtService) GenerateToken(userID uuid.UUID, username string) (accessToken string, refreshToken string, refreshTokenHash string, err error) {
-	access, err := j.generateToken(userID, username, j.accessExpire, j.accessSecret)
+func (j *jwtService) GenerateToken(userID uuid.UUID, email string) (accessToken string, refreshToken string, refreshTokenHash string, err error) {
+	access, err := j.generateToken(userID, email, j.accessExpire, j.accessSecret)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to generate access token: %w", err)
 	}
 
-	refresh, err := j.generateToken(userID, username, j.refreshExpire, j.refreshSecret)
+	refresh, err := j.generateToken(userID, email, j.refreshExpire, j.refreshSecret)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to generate refresh token: %w", err)
 	}
@@ -113,11 +113,11 @@ func (j *jwtService) CompareTokenHash(token, hash string) error {
 	return errorEntity.ErrTokenMismatch
 }
 
-func (j *jwtService) generateToken(userID uuid.UUID, username string, duration time.Duration, key string) (string, error) {
+func (j *jwtService) generateToken(userID uuid.UUID, email string, duration time.Duration, key string) (string, error) {
 	expirationTime := time.Now().Add(duration)
 	claims := &jwtContract.UserClaims{
-		UUID:     userID,
-		Username: username,
+		UUID:  userID,
+		Email: email,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

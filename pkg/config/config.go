@@ -10,6 +10,7 @@ type Config struct {
 	Server   ServerConfig
 	Jwt      JwtConfig
 	Redis    RedisConfig
+	Mail     MailConfig
 }
 
 type DatabaseConfig struct {
@@ -40,6 +41,13 @@ type RedisConfig struct {
 	Password string
 }
 
+type MailConfig struct {
+	Host     string
+	Port     string
+	Username string
+	Password string
+}
+
 func Load() (*Config, error) {
 	_ = godotenv.Load()
 
@@ -67,6 +75,12 @@ func Load() (*Config, error) {
 			Host:     getEnv("REDIS_HOST", ""),
 			Port:     getEnv("REDIS_PORT", ""),
 			Password: getEnv("REDIS_PASSWORD", ""),
+		},
+		Mail: MailConfig{
+			Host:     getEnv("MAIL_HOST", ""),
+			Port:     getEnv("MAIL_PORT", ""),
+			Username: getEnv("MAIL_USERNAME", ""),
+			Password: getEnv("MAIL_PASSWORD", ""),
 		},
 	}, nil
 }
