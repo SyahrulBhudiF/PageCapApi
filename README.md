@@ -1,6 +1,6 @@
 # Doc-Management
 
-This project is a document management system built with Go. It follows a layered architecture pattern, separating concerns into distinct layers to improve maintainability, testability, and scalability. The structure incorporates principles of Domain-Driven Design (DDD), focusing on organizing the codebase around the core business domain, and utilizes Hexagonal Architecture as an implementation strategy.
+This project is a document management system built with Go. The structure incorporates principles of Domain-Driven Design (DDD), focusing on organizing the codebase around the core business domain, and utilizes Hexagonal Architecture as an implementation strategy.
 
 ## Architecture Overview
 
