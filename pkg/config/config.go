@@ -10,6 +10,7 @@ type Config struct {
 	Server   ServerConfig
 	Jwt      JwtConfig
 	Redis    RedisConfig
+	Mail     MailConfig
 }
 
 type DatabaseConfig struct {
@@ -25,6 +26,7 @@ type DatabaseConfig struct {
 type ServerConfig struct {
 	Port        string
 	Environment string
+	Salt        string
 }
 
 type JwtConfig struct {
@@ -37,6 +39,13 @@ type JwtConfig struct {
 type RedisConfig struct {
 	Host     string
 	Port     string
+	Password string
+}
+
+type MailConfig struct {
+	Host     string
+	Port     string
+	Username string
 	Password string
 }
 
@@ -56,6 +65,7 @@ func Load() (*Config, error) {
 		Server: ServerConfig{
 			Port:        getEnv("SERVER_PORT", ""),
 			Environment: getEnv("ENVIRONMENT", ""),
+			Salt:        getEnv("SALT", ""),
 		},
 		Jwt: JwtConfig{
 			AccessTokenSecret:  getEnv("ACCESS_TOKEN_SECRET", ""),
@@ -67,6 +77,12 @@ func Load() (*Config, error) {
 			Host:     getEnv("REDIS_HOST", ""),
 			Port:     getEnv("REDIS_PORT", ""),
 			Password: getEnv("REDIS_PASSWORD", ""),
+		},
+		Mail: MailConfig{
+			Host:     getEnv("MAIL_HOST", ""),
+			Port:     getEnv("MAIL_PORT", ""),
+			Username: getEnv("MAIL_USERNAME", ""),
+			Password: getEnv("MAIL_PASSWORD", ""),
 		},
 	}, nil
 }
