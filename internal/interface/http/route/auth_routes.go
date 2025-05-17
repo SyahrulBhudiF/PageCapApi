@@ -1,7 +1,7 @@
 package route
 
 import (
-	"github.com/SyahrulBhudiF/Doc-Management.git/internal/interfaces/http/handler"
+	"github.com/SyahrulBhudiF/Doc-Management.git/internal/interface/http/handler"
 	"github.com/gin-gonic/gin"
 )
 

@@ -3,7 +3,7 @@ package handler
 import (
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/application/usecase"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/entity"
-	"github.com/SyahrulBhudiF/Doc-Management.git/internal/interfaces/http/dto"
+	"github.com/SyahrulBhudiF/Doc-Management.git/internal/interface/http/dto"
 	"github.com/SyahrulBhudiF/Doc-Management.git/pkg/response"
 	"github.com/gin-gonic/gin"
 )
@@ -18,6 +18,17 @@ func NewAuthHandler(auth *usecase.AuthUseCase) *AuthHandler {
 	}
 }
 
+// Register godoc
+// @Summary Register a new user
+// @Description Register a new user with name, email, and password
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param register body dto.RegisterRequest true "Register Request"
+// @Success 201 {object} response.Response{data=entity.User} "user registered successfully"
+// @Failure 400 {object} response.Response "invalid request"
+// @Failure 500 {object} response.Response "internal server error"
+// @Router /auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req dto.RegisterRequest
 

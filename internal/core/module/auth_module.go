@@ -6,7 +6,7 @@ import (
 	redisContract "github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/contract/redis"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/mail"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/persistence"
-	"github.com/SyahrulBhudiF/Doc-Management.git/internal/interfaces/http/handler"
+	"github.com/SyahrulBhudiF/Doc-Management.git/internal/interface/http/handler"
 	"github.com/SyahrulBhudiF/Doc-Management.git/pkg/config"
 	"gorm.io/gorm"
 )

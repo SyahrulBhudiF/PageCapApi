@@ -1,14 +1,17 @@
 package core
 
 import (
+	docs "github.com/SyahrulBhudiF/Doc-Management.git/docs"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/core/module"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/database"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/jwt"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/mail"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/redis"
-	"github.com/SyahrulBhudiF/Doc-Management.git/internal/interfaces/http/route"
+	"github.com/SyahrulBhudiF/Doc-Management.git/internal/interface/http/route"
 	"github.com/SyahrulBhudiF/Doc-Management.git/pkg/config"
 	"github.com/gin-gonic/gin"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 type App struct {
@@ -40,8 +43,10 @@ func Bootstrap() (*App, error) {
 	authHandler := module.InitAuthModule(cfg, db, jwtService, mailService, redisRepo)
 
 	// Router
+	docs.SwaggerInfo.BasePath = "/api/v1"
 	r := route.NewRoute(authHandler)
 	router := r.RegisterRoutes()
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
 	return &App{Router: router}, nil
 }
