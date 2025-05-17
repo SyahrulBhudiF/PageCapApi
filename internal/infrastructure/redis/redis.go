@@ -17,7 +17,7 @@ func NewRedis(cfg *config.Config) (*redis.Client, error) {
 	}
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%d", host, port),
+		Addr:     fmt.Sprintf("%s:%s", host, port),
 		Password: password,
 	})
 

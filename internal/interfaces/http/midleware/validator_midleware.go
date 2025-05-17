@@ -10,6 +10,10 @@ import (
 
 var Validator = validator.New()
 
+type CustomValidatable interface {
+	Validate() error
+}
+
 func init() {
 	Validator.RegisterTagNameFunc(func(fld reflect.StructField) string {
 		name := fld.Tag.Get("json")
@@ -39,6 +43,13 @@ func EnsureJsonValidRequest[T any]() gin.HandlerFunc {
 			}
 			response.BadRequest(c, "invalid request", fmt.Errorf(errStr))
 			return
+		}
+
+		if custom, ok := any(body).(CustomValidatable); ok {
+			if err := custom.Validate(); err != nil {
+				response.BadRequest(c, "invalid request", err)
+				return
+			}
 		}
 
 		c.Set("body", body)

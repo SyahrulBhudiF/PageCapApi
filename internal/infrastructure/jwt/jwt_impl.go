@@ -14,14 +14,14 @@ import (
 	"time"
 )
 
-type jwtService struct {
+type Service struct {
 	accessSecret  string
 	refreshSecret string
 	accessExpire  time.Duration
 	refreshExpire time.Duration
 }
 
-var _ jwtContract.Service = (*jwtService)(nil)
+var _ jwtContract.Service = (*Service)(nil)
 
 func NewJwtService(cfg *config.Config) jwtContract.Service {
 	accessDuration, err := time.ParseDuration(cfg.Jwt.AccessTokenExpire)
@@ -34,7 +34,7 @@ func NewJwtService(cfg *config.Config) jwtContract.Service {
 		panic(fmt.Errorf("failed to parse refresh token duration: %w", err))
 	}
 
-	return &jwtService{
+	return &Service{
 		accessSecret:  cfg.Jwt.AccessTokenSecret,
 		refreshSecret: cfg.Jwt.RefreshTokenSecret,
 		accessExpire:  accessDuration,
@@ -42,7 +42,7 @@ func NewJwtService(cfg *config.Config) jwtContract.Service {
 	}
 }
 
-func (j *jwtService) GenerateToken(userID uuid.UUID, email string) (accessToken string, refreshToken string, refreshTokenHash string, err error) {
+func (j *Service) GenerateToken(userID uuid.UUID, email string) (accessToken string, refreshToken string, refreshTokenHash string, err error) {
 	access, err := j.generateToken(userID, email, j.accessExpire, j.accessSecret)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to generate access token: %w", err)
@@ -61,7 +61,7 @@ func (j *jwtService) GenerateToken(userID uuid.UUID, email string) (accessToken 
 	return access, refresh, refreshTokenHash, nil
 }
 
-func (j *jwtService) ValidateToken(tokenString string, key string) (*jwtContract.UserClaims, error) {
+func (j *Service) ValidateToken(tokenString string, key string) (*jwtContract.UserClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &jwtContract.UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -83,7 +83,7 @@ func (j *jwtService) ValidateToken(tokenString string, key string) (*jwtContract
 	return nil, errorEntity.ErrInvalidToken
 }
 
-func (j *jwtService) HashToken(token string) (string, error) {
+func (j *Service) HashToken(token string) (string, error) {
 	hasher := sha256.New()
 	_, err := hasher.Write([]byte(token))
 	if err != nil {
@@ -94,7 +94,7 @@ func (j *jwtService) HashToken(token string) (string, error) {
 	return hex.EncodeToString(hashBytes), nil
 }
 
-func (j *jwtService) CompareTokenHash(token, hash string) error {
+func (j *Service) CompareTokenHash(token, hash string) error {
 	incomingHash, err := j.HashToken(token)
 	if err != nil {
 		return fmt.Errorf("failed to hash incoming token for comparison: %w", err)
@@ -113,7 +113,7 @@ func (j *jwtService) CompareTokenHash(token, hash string) error {
 	return errorEntity.ErrTokenMismatch
 }
 
-func (j *jwtService) generateToken(userID uuid.UUID, email string, duration time.Duration, key string) (string, error) {
+func (j *Service) generateToken(userID uuid.UUID, email string, duration time.Duration, key string) (string, error) {
 	expirationTime := time.Now().Add(duration)
 	claims := &jwtContract.UserClaims{
 		UUID:  userID,
