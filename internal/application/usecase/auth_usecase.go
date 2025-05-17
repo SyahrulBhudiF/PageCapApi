@@ -32,10 +32,7 @@ func NewAuthUseCase(repo repository.UserRepository, jwt jwt.Service, redis redis
 }
 
 func (a *AuthUseCase) Register(user *entity.User, ctx context.Context) (*entity.User, error) {
-	existingUser, err := a.repo.FindByEmail(ctx, user.Email)
-	if err != nil {
-		return nil, err
-	}
+	existingUser, _ := a.repo.FindByEmail(ctx, user.Email)
 
 	if existingUser != nil {
 		logrus.Error("User already exists")
@@ -46,8 +43,8 @@ func (a *AuthUseCase) Register(user *entity.User, ctx context.Context) (*entity.
 
 	newUser, err := entity.NewUser(
 		user.Email,
-		user.Name,
 		hashedPassword,
+		user.Name,
 		"",
 	)
 

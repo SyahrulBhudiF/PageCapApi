@@ -3,14 +3,18 @@ definitions:
   dto.RegisterRequest:
     properties:
       confirm:
-        minLength: 6
+        example: Pass123!@#
+        minLength: 8
         type: string
       email:
+        example: john@example.com
         type: string
       name:
+        example: John Doe
         type: string
       password:
-        minLength: 6
+        example: Pass123!@#
+        minLength: 8
         type: string
     required:
     - confirm

@@ -86,17 +86,21 @@ const docTemplate = `{
             "properties": {
                 "confirm": {
                     "type": "string",
-                    "minLength": 6
+                    "minLength": 8,
+                    "example": "Pass123!@#"
                 },
                 "email": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "john@example.com"
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "John Doe"
                 },
                 "password": {
                     "type": "string",
-                    "minLength": 6
+                    "minLength": 8,
+                    "example": "Pass123!@#"
                 }
             }
         },
