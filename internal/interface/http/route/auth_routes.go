@@ -13,5 +13,6 @@ func RegisterAuthRoutes(rg *gin.RouterGroup, authHandler *handler.AuthHandler, m
 		auth.POST("/register", midleware.EnsureJsonValidRequest[dto.RegisterRequest](), authHandler.Register)
 		auth.POST("/login", midleware.EnsureJsonValidRequest[dto.LoginRequest](), authHandler.Login)
 		auth.DELETE("/logout", mm.EnsureAuthenticated(), midleware.EnsureJsonValidRequest[dto.LogoutRequest](), authHandler.Logout)
+		auth.POST("/refresh", mm.EnsureAuthenticated(), midleware.EnsureJsonValidRequest[dto.RefreshTokenRequest](), authHandler.RefreshToken)
 	}
 }

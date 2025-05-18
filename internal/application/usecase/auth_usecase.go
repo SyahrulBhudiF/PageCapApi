@@ -152,3 +152,48 @@ func (a *AuthUseCase) Logout(req *dto.LogoutRequest, user *entity.User, accessTo
 
 	return nil
 }
+
+func (a *AuthUseCase) RefreshToken(req *dto.RefreshTokenRequest, user *entity.User) (*dto.RefreshTokenResponse, error) {
+	isBlacklisted, err := a.redis.Exists(fmt.Sprintf("blacklist:%s", req.RefreshToken))
+	if err != nil {
+		logrus.Error("Failed to check if token is blacklisted")
+		return nil, err
+	}
+
+	if isBlacklisted {
+		logrus.Error("Token is blacklisted")
+		return nil, errorEntity.ErrTokenAlreadyBlacklisted
+	}
+
+	claims, err := a.jwt.ValidateToken(req.RefreshToken, a.cfg.Jwt.RefreshTokenSecret)
+	if err != nil {
+		logrus.Error("Invalid refresh token")
+		return nil, errorEntity.ErrInvalidToken
+	}
+
+	if claims.UUID != user.UUID {
+		logrus.Error("Invalid user")
+		return nil, errorEntity.ErrInvalidUser
+	}
+
+	hashRefresh, err := a.redis.Get(fmt.Sprintf("user_refresh:%s", user.UUID))
+	if err != nil {
+		logrus.Error("Failed to get refresh token from Redis")
+		return nil, err
+	}
+
+	err = a.jwt.CompareTokenHash(req.RefreshToken, hashRefresh)
+	if err != nil {
+		logrus.Error("Invalid refresh token")
+		return nil, errorEntity.ErrInvalidToken
+	}
+
+	time, _ := tm.ParseDuration(a.cfg.Jwt.AccessTokenExpire)
+	token, err := a.jwt.GenerateSingleToken(claims.UUID, claims.Email, time, a.cfg.Jwt.AccessTokenSecret)
+	if err != nil {
+		logrus.Error("Failed to generate new access token")
+		return nil, err
+	}
+
+	return &dto.RefreshTokenResponse{AccessToken: token}, nil
+}

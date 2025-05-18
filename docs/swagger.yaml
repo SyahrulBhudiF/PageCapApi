@@ -30,6 +30,20 @@ definitions:
     required:
     - refresh_token
     type: object
+  dto.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  dto.RefreshTokenResponse:
+    properties:
+      access_token:
+        type: string
+    required:
+    - access_token
+    type: object
   dto.RegisterRequest:
     properties:
       confirm:
@@ -159,6 +173,47 @@ paths:
       security:
       - BearerAuth: []
       summary: Logout user
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh access token using refresh token
+      parameters:
+      - description: Refresh Token Request
+        in: body
+        name: refresh
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: access token refreshed successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RefreshTokenResponse'
+              type: object
+        "400":
+          description: invalid request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Refresh access token
       tags:
       - Auth
   /auth/register:

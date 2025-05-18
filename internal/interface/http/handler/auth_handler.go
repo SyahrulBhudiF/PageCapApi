@@ -136,3 +136,43 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 
 	response.OK(c, "user logged out successfully", nil)
 }
+
+// RefreshToken godoc
+// @Summary Refresh access token
+// @Description Refresh access token using refresh token
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param refresh body dto.RefreshTokenRequest true "Refresh Token Request"
+// @Success 200 {object} response.Response{data=dto.RefreshTokenResponse} "access token refreshed successfully"
+// @Failure 400 {object} response.Response "invalid request"
+// @Failure 401 {object} response.Response "unauthorized"
+// @Failure 500 {object} response.Response "internal server error"
+// @Security BearerAuth
+// @Router /auth/refresh [post]
+func (h *AuthHandler) RefreshToken(c *gin.Context) {
+	body, err := util.GetBody[dto.RefreshTokenRequest](c, "body")
+	if err != nil {
+		response.BadRequest(c, "invalid request", err)
+		return
+	}
+
+	user, err := util.GetBody[entity.User](c, "user")
+	if err != nil {
+		response.BadRequest(c, "invalid request", err)
+		return
+	}
+
+	token, err := h.auth.RefreshToken(&body, &user)
+	if err != nil {
+		if util.ErrorInList(err, errorEntity.ErrInvalidToken, errorEntity.ErrTokenAlreadyBlacklisted, errorEntity.ErrInvalidUser) {
+			response.Unauthorized(c, "unauthorized", err)
+			return
+		} else {
+			response.InternalServerError(c, err)
+			return
+		}
+	}
+
+	response.OK(c, "access token refreshed successfully", token)
+}
