@@ -90,6 +90,20 @@ definitions:
     required:
     - email
     type: object
+  dto.SetPasswordRequest:
+    properties:
+      confirm:
+        example: <PASSWORD>!@#
+        minLength: 8
+        type: string
+      password:
+        example: <PASSWORD>!@#
+        minLength: 8
+        type: string
+    required:
+    - confirm
+    - password
+    type: object
   dto.VerifyEmailRequest:
     properties:
       email:
@@ -178,6 +192,65 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       summary: Forgot password
+      tags:
+      - Auth
+  /auth/google:
+    get:
+      consumes:
+      - application/json
+      description: Login using Google OAuth2
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Google login successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Google login
+      tags:
+      - Auth
+  /auth/google/callback:
+    get:
+      consumes:
+      - application/json
+      description: Callback URL for Google OAuth2
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Google login successful
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.LoginResponse'
+              type: object
+        "400":
+          description: invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Google callback
       tags:
       - Auth
   /auth/login:
@@ -363,6 +436,42 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       summary: Send OTP
+      tags:
+      - Auth
+  /auth/set-password:
+    post:
+      consumes:
+      - application/json
+      description: Set password for the user after Google login
+      parameters:
+      - description: Set Password Request
+        in: body
+        name: setPassword
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password set successfully
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Set password
       tags:
       - Auth
   /auth/verify-email:

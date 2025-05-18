@@ -13,6 +13,8 @@ import (
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/mail"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/shared/util"
 	"github.com/SyahrulBhudiF/Doc-Management.git/pkg/config"
+	"github.com/google/uuid"
+	"github.com/markbates/goth"
 	"github.com/sirupsen/logrus"
 	tm "time"
 )
@@ -40,7 +42,7 @@ func (a *AuthUseCase) Register(req *dto.RegisterRequest, ctx context.Context) (*
 
 	if existingUser != nil {
 		logrus.Error("User already exists")
-		return nil, errorEntity.ErrUserAlreadyExists
+		return nil, errorEntity.ErrEmailAlreadyExists
 	}
 
 	hashedPassword := util.HashPassword(req.Password, a.cfg.Server.Salt)
@@ -90,19 +92,38 @@ func (a *AuthUseCase) Login(req *dto.LoginRequest, ctx context.Context) (*dto.Lo
 		return nil, err
 	}
 
-	time, _ := tm.ParseDuration(a.cfg.Jwt.AccessTokenExpire)
-	jsonUser, _ := json.Marshal(existingUser)
-	err = a.redis.Set(fmt.Sprintf("user:%s", existingUser.UUID), jsonUser, time)
+	errChan := make(chan error, 2)
+
+	accessExpire, _ := tm.ParseDuration(a.cfg.Jwt.AccessTokenExpire)
+	refreshExpire, _ := tm.ParseDuration(a.cfg.Jwt.RefreshTokenExpire)
+	jsonUser, err := json.Marshal(existingUser)
 	if err != nil {
-		logrus.Error("Failed to set access token in Redis")
+		logrus.Error("Failed to marshal user data")
 		return nil, err
 	}
 
-	time, _ = tm.ParseDuration(a.cfg.Jwt.RefreshTokenExpire)
-	err = a.redis.Set(fmt.Sprintf("user_refresh:%s", existingUser.UUID), refreshHash, time)
-	if err != nil {
-		logrus.Error("Failed to set refresh token in Redis")
-		return nil, err
+	go func(userUUID string, jsonUser []byte, expire tm.Duration, ch chan<- error) {
+		err := a.redis.Set(fmt.Sprintf("user:%s", userUUID), jsonUser, expire)
+		ch <- err
+	}(existingUser.UUID.String(), jsonUser, accessExpire, errChan)
+
+	go func(userUUID string, refreshHash string, expire tm.Duration, ch chan<- error) {
+		err := a.redis.Set(fmt.Sprintf("user_refresh:%s", userUUID), refreshHash, expire)
+		ch <- err
+	}(existingUser.UUID.String(), refreshHash, refreshExpire, errChan)
+
+	var combinedErr error
+	for i := 0; i < 2; i++ {
+		if err := <-errChan; err != nil {
+			logrus.Error("Failed to set token in Redis:", err)
+			combinedErr = err
+		}
+	}
+
+	close(errChan)
+
+	if combinedErr != nil {
+		return nil, combinedErr
 	}
 
 	logrus.Info("User logged in successfully")
@@ -112,7 +133,7 @@ func (a *AuthUseCase) Login(req *dto.LoginRequest, ctx context.Context) (*dto.Lo
 	}, nil
 }
 
-func (a *AuthUseCase) Logout(req *dto.LogoutRequest, user *entity.User, accessToken string, ctx context.Context) error {
+func (a *AuthUseCase) Logout(req *dto.LogoutRequest, user *entity.User, accessToken string) error {
 	claims, err := a.jwt.ValidateToken(req.RefreshToken, a.cfg.Jwt.RefreshTokenSecret)
 	if err != nil {
 		logrus.Error("Invalid refresh token")
@@ -374,6 +395,124 @@ func (a *AuthUseCase) ForgotPassword(req *dto.ForgotPasswordRequest, ctx context
 
 	close(errCh)
 
+	logrus.Info("Password updated successfully")
+	return nil
+}
+
+func (a *AuthUseCase) GoogleLogin(g *goth.User, ctx context.Context) (*dto.LoginResponse, error) {
+	now := tm.Now()
+
+	user, err := a.repo.FindByEmail(ctx, g.Email)
+	if err != nil {
+		user = nil
+	}
+
+	if user == nil {
+		user = &entity.User{
+			Email:          g.Email,
+			Name:           g.Name,
+			ProfilePicture: g.AvatarURL,
+			EmailVerified:  &now,
+		}
+		err := a.repo.Create(ctx, user)
+		if err != nil {
+			logrus.Error("Failed to create new user from Google login:", err)
+			return nil, err
+		}
+
+		logrus.Info("New user created from Google login")
+	} else if user.EmailVerified == nil {
+		err := a.repo.UpdateEmailVerified(ctx, user.UUID)
+		if err != nil {
+			logrus.Error("Failed to update email verified status:", err)
+			return nil, errorEntity.ErrEmailNotVerified
+		}
+		user.EmailVerified = &now
+	}
+
+	if user.UUID == uuid.Nil {
+		logrus.Error("User UUID is empty")
+		return nil, errorEntity.ErrUserNotFound
+	}
+
+	acc, refresh, refreshHash, err := a.jwt.GenerateToken(user.UUID, user.Email)
+	if err != nil {
+		logrus.Error("Failed to generate JWT token:", err)
+		return nil, err
+	}
+
+	loginReq := &dto.LoginResponse{
+		AccessToken:  acc,
+		RefreshToken: refresh,
+	}
+
+	errChan := make(chan error, 2)
+
+	accessExpire, _ := tm.ParseDuration(a.cfg.Jwt.AccessTokenExpire)
+	refreshExpire, _ := tm.ParseDuration(a.cfg.Jwt.RefreshTokenExpire)
+	jsonUser, err := json.Marshal(user)
+	if err != nil {
+		logrus.Error("Failed to marshal user data")
+		return nil, err
+	}
+
+	go func(userUUID string, jsonUser []byte, expire tm.Duration, ch chan<- error) {
+		err := a.redis.Set(fmt.Sprintf("user:%s", userUUID), jsonUser, expire)
+		logrus.Info("Set user data in Redis")
+		ch <- err
+	}(user.UUID.String(), jsonUser, accessExpire, errChan)
+
+	go func(userUUID string, refreshHash string, expire tm.Duration, ch chan<- error) {
+		err := a.redis.Set(fmt.Sprintf("user_refresh:%s", userUUID), refreshHash, expire)
+		logrus.Info("Set refresh token in Redis")
+		ch <- err
+	}(user.UUID.String(), refreshHash, refreshExpire, errChan)
+
+	var combinedErr error
+	for i := 0; i < 2; i++ {
+		if err := <-errChan; err != nil {
+			logrus.Error("Failed to set token in Redis:", err)
+			combinedErr = err
+		}
+	}
+
+	close(errChan)
+
+	if combinedErr != nil {
+		return nil, combinedErr
+	}
+
+	return loginReq, nil
+}
+
+func (a *AuthUseCase) SetPassword(req *dto.SetPasswordRequest, e *entity.User, ctx context.Context) error {
+	existingUser, err := a.repo.FindByEmail(ctx, e.Email)
+	if err != nil {
+		logrus.Error("User not found")
+		return errorEntity.ErrUserNotFound
+	}
+
+	if existingUser.Password != "" {
+		logrus.Error("User already has a password")
+		return errorEntity.ErrUserAlreadyHasPassword
+	}
+
+	hashedPassword := util.HashPassword(req.Password, a.cfg.Server.Salt)
+	existingUser.Password = hashedPassword
+	existingUser.UpdatedAt = tm.Now()
+
+	err = a.repo.Update(ctx, existingUser)
+	if err != nil {
+		logrus.Error("Failed to update user password")
+		return err
+	}
+
+	jsonUser, _ := json.Marshal(existingUser)
+	err = a.redis.Set(fmt.Sprintf("user:%s", existingUser.UUID), jsonUser, 0)
+	if err != nil {
+		logrus.Error("Failed to set user data in Redis:", err)
+		return err
+	}
 	logrus.Info("Password updated successfully")
 	return nil
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/shared/util"
 	"github.com/SyahrulBhudiF/Doc-Management.git/pkg/response"
 	"github.com/gin-gonic/gin"
+	"github.com/markbates/goth/gothic"
 )
 
 type AuthHandler struct {
@@ -123,7 +124,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 		return
 	}
 
-	err = h.auth.Logout(&body, &user, accessToken, c.Request.Context())
+	err = h.auth.Logout(&body, &user, accessToken)
 	if err != nil {
 		if util.ErrorInList(err, errorEntity.ErrInvalidToken, errorEntity.ErrInvalidUser, errorEntity.ErrTokenAlreadyBlacklisted) {
 			response.Unauthorized(c, "unauthorized", err)
@@ -269,4 +270,93 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 	}
 
 	response.OK(c, "Password reset successfully", nil)
+}
+
+// GoogleLogin godoc
+// @Summary Google login
+// @Description Login using Google OAuth2
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Success 200 {object} response.Response "Google login successful"
+// @Failure 400 {object} response.ErrorResponse "invalid request"
+// @Failure 401 {object} response.ErrorResponse "unauthorized"
+// @Failure 500 {object} response.ErrorResponse "internal server error"
+// @Router /auth/google [get]
+func (h *AuthHandler) GoogleLogin(c *gin.Context) {
+	c.Request = c.Request.WithContext(c)
+
+	gothic.BeginAuthHandler(c.Writer, c.Request)
+}
+
+// GoogleCallback godoc
+// @Summary Google callback
+// @Description Callback URL for Google OAuth2
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Success 200 {object} response.Response{data=dto.LoginResponse} "Google login successful"
+// @Failure 400 {object} response.ErrorResponse "invalid request"
+// @Failure 401 {object} response.ErrorResponse "unauthorized"
+// @Failure 500 {object} response.ErrorResponse "internal server error"
+// @Router /auth/google/callback [get]
+func (h *AuthHandler) GoogleCallback(c *gin.Context) {
+	c.Request = c.Request.WithContext(c)
+
+	user, err := gothic.CompleteUserAuth(c.Writer, c.Request)
+	if err != nil {
+		response.Unauthorized(c, "unauthorized", err)
+		return
+	}
+
+	token, err := h.auth.GoogleLogin(&user, c.Request.Context())
+	if err != nil {
+		if util.ErrorInList(err, errorEntity.ErrUserNotFound, errorEntity.ErrEmailNotVerified) {
+			response.Unauthorized(c, "unauthorized", err)
+		} else {
+			response.InternalServerError(c, err)
+		}
+		return
+	}
+
+	response.OK(c, "Google login successful", token)
+}
+
+// SetPassword godoc
+// @Summary Set password
+// @Description Set password for the user after Google login
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param setPassword body dto.SetPasswordRequest true "Set Password Request"
+// @Success 200 {object} response.Response "Password set successfully"
+// @Failure 400 {object} response.ErrorResponse "invalid request"
+// @Failure 401 {object} response.ErrorResponse "unauthorized"
+// @Failure 500 {object} response.ErrorResponse "internal server error"
+// @Security BearerAuth
+// @Router /auth/set-password [post]
+func (h *AuthHandler) SetPassword(c *gin.Context) {
+	body, err := util.GetBody[dto.SetPasswordRequest](c, "body")
+	if err != nil {
+		response.BadRequest(c, "invalid request", err)
+		return
+	}
+
+	user, err := util.GetBody[entity.User](c, "user")
+	if err != nil {
+		response.BadRequest(c, "invalid request", err)
+		return
+	}
+
+	err = h.auth.SetPassword(&body, &user, c.Request.Context())
+	if err != nil {
+		if util.ErrorInList(err, errorEntity.ErrUserNotFound, errorEntity.ErrUserAlreadyHasPassword) {
+			response.Unauthorized(c, "unauthorized", err)
+		} else {
+			response.InternalServerError(c, err)
+		}
+		return
+	}
+
+	response.OK(c, "Password set successfully", nil)
 }

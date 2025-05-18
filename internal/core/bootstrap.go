@@ -3,6 +3,7 @@ package core
 import (
 	docs "github.com/SyahrulBhudiF/Doc-Management.git/docs"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/core/module"
+	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/Oauth2/Google"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/database"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/jwt"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/mail"
@@ -12,8 +13,10 @@ import (
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/interface/http/route"
 	"github.com/SyahrulBhudiF/Doc-Management.git/pkg/config"
 	"github.com/gin-gonic/gin"
+	"github.com/markbates/goth/gothic"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"net/http"
 )
 
 type App struct {
@@ -40,6 +43,12 @@ func Bootstrap() (*App, error) {
 	jwtService := jwt.NewJwtService(cfg)
 	mailService := mail.NewMailService(cfg)
 	redisRepo := redis.NewRedisService(rd, "client")
+
+	// Initialize Oauth2 providers
+	Google.NewGoogle(cfg)
+	gothic.GetProviderName = func(r *http.Request) (string, error) {
+		return "google", nil
+	}
 
 	// Repositories
 	userRepo := persistence.NewUserRepository(db)

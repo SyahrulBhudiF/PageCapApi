@@ -46,7 +46,12 @@ type VerifyEmailRequest struct {
 type ForgotPasswordRequest struct {
 	Email    string `json:"email" binding:"required" example:"john@example.com"`
 	Otp      string `json:"otp" binding:"required"`
-	Password string `json:"password" binding:"required,min=8" example:"<PASSWORD>!@#"`
+	Password string `json:"password" binding:"required,min=8" example:"Password1!@#"`
+}
+
+type SetPasswordRequest struct {
+	Password string `json:"password" binding:"required,min=8" example:"Password1!@#"`
+	Confirm  string `json:"confirm" binding:"required,min=8" example:"Password1!@#"`
 }
 
 var passwordPattern = `^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$`
@@ -74,6 +79,21 @@ func (r ForgotPasswordRequest) Validate() error {
 	}
 	if !match {
 		return errors.New("password must have at least one lowercase letter, one uppercase letter, one digit, one special character, and be at least 8 characters long")
+	}
+	return nil
+}
+
+func (r SetPasswordRequest) Validate() error {
+	re := regexp2.MustCompile(passwordPattern, 0)
+	match, err := re.MatchString(r.Password)
+	if err != nil {
+		return errors.New("failed to validate password")
+	}
+	if !match {
+		return errors.New("password must have at least one lowercase letter, one uppercase letter, one digit, one special character, and be at least 8 characters long")
+	}
+	if r.Password != r.Confirm {
+		return errors.New("confirm must match password")
 	}
 	return nil
 }

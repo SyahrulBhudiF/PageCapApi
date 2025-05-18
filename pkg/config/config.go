@@ -11,6 +11,17 @@ type Config struct {
 	Jwt      JwtConfig
 	Redis    RedisConfig
 	Mail     MailConfig
+	Oauth2   Oauth2Config
+}
+
+type Oauth2Config struct {
+	Google GoogleConfig
+}
+
+type GoogleConfig struct {
+	ClientID     string
+	ClientSecret string
+	RedirectURL  string
 }
 
 type DatabaseConfig struct {
@@ -83,6 +94,13 @@ func Load() (*Config, error) {
 			Port:     getEnv("MAIL_PORT", ""),
 			Username: getEnv("MAIL_USERNAME", ""),
 			Password: getEnv("MAIL_PASSWORD", ""),
+		},
+		Oauth2: Oauth2Config{
+			Google: GoogleConfig{
+				ClientID:     getEnv("GOOGLE_CLIENT_ID", ""),
+				ClientSecret: getEnv("GOOGLE_CLIENT_SECRET", ""),
+				RedirectURL:  getEnv("GOOGLE_REDIRECT_URL", ""),
+			},
 		},
 	}, nil
 }

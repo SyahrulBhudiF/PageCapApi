@@ -17,5 +17,8 @@ func RegisterAuthRoutes(rg *gin.RouterGroup, authHandler *handler.AuthHandler, m
 		auth.POST("/send-otp", midleware.EnsureJsonValidRequest[dto.SendOtpRequest](), authHandler.SendOtp)
 		auth.POST("/verify-email", midleware.EnsureJsonValidRequest[dto.VerifyEmailRequest](), authHandler.VerifyEmail)
 		auth.POST("/forgot-password", midleware.EnsureJsonValidRequest[dto.ForgotPasswordRequest](), authHandler.ForgotPassword)
+		auth.GET("/google", authHandler.GoogleLogin)
+		auth.GET("/google/callback", authHandler.GoogleCallback)
+		auth.POST("/set-password", mm.EnsureAuthenticated(), midleware.EnsureJsonValidRequest[dto.SetPasswordRequest](), authHandler.SetPassword)
 	}
 }
