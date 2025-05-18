@@ -30,8 +30,8 @@ func NewAuthHandler(auth *usecase.AuthUseCase) *AuthHandler {
 // @Produce json
 // @Param register body dto.RegisterRequest true "Register Request"
 // @Success 201 {object} response.Response{data=entity.User} "user registered successfully"
-// @Failure 400 {object} response.Response "invalid request"
-// @Failure 500 {object} response.Response "internal server error"
+// @Failure 400 {object} response.ErrorResponse "invalid request"
+// @Failure 500 {object} response.ErrorResponse "internal server error"
 // @Router /auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	req, err := util.GetBody[dto.RegisterRequest](c, "body")
@@ -61,9 +61,9 @@ func (h *AuthHandler) Register(c *gin.Context) {
 // @Produce json
 // @Param login body dto.LoginRequest true "Login Request"
 // @Success 201 {object} response.Response{data=dto.LoginResponse} "user logged in successfully"
-// @Failure 400 {object} response.Response "invalid request"
-// @Failure 401 {object} response.Response "unauthorized"
-// @Failure 500 {object} response.Response "internal server error"
+// @Failure 400 {object} response.ErrorResponse "invalid request"
+// @Failure 401 {object} response.ErrorResponse "unauthorized"
+// @Failure 500 {object} response.ErrorResponse "internal server error"
 // @Router /auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	req, err := util.GetBody[dto.LoginRequest](c, "body")
@@ -93,9 +93,9 @@ func (h *AuthHandler) Login(c *gin.Context) {
 // @Produce json
 // @Param logout body dto.LogoutRequest true "Logout Request"
 // @Success 200 {object} response.Response "user logged out successfully"
-// @Failure 400 {object} response.Response "invalid request"
-// @Failure 401 {object} response.Response "unauthorized"
-// @Failure 500 {object} response.Response "internal server error"
+// @Failure 400 {object} response.ErrorResponse "invalid request"
+// @Failure 401 {object} response.ErrorResponse "unauthorized"
+// @Failure 500 {object} response.ErrorResponse "internal server error"
 // @Security BearerAuth
 // @Router /auth/logout [delete]
 func (h *AuthHandler) Logout(c *gin.Context) {
@@ -145,9 +145,9 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 // @Produce json
 // @Param refresh body dto.RefreshTokenRequest true "Refresh Token Request"
 // @Success 200 {object} response.Response{data=dto.RefreshTokenResponse} "access token refreshed successfully"
-// @Failure 400 {object} response.Response "invalid request"
-// @Failure 401 {object} response.Response "unauthorized"
-// @Failure 500 {object} response.Response "internal server error"
+// @Failure 400 {object} response.ErrorResponse "invalid request"
+// @Failure 401 {object} response.ErrorResponse "unauthorized"
+// @Failure 500 {object} response.ErrorResponse "internal server error"
 // @Security BearerAuth
 // @Router /auth/refresh [post]
 func (h *AuthHandler) RefreshToken(c *gin.Context) {

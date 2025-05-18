@@ -83,6 +83,15 @@ definitions:
       uuid:
         type: string
     type: object
+  response.ErrorResponse:
+    properties:
+      error:
+        type: string
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
   response.Response:
     properties:
       data: {}
@@ -127,15 +136,15 @@ paths:
         "400":
           description: invalid request
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: unauthorized
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: internal server error
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
       summary: Login user
       tags:
       - Auth
@@ -161,15 +170,15 @@ paths:
         "400":
           description: invalid request
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: unauthorized
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: internal server error
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Logout user
@@ -202,15 +211,15 @@ paths:
         "400":
           description: invalid request
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: unauthorized
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: internal server error
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Refresh access token
@@ -243,11 +252,11 @@ paths:
         "400":
           description: invalid request
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: internal server error
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
       summary: Register a new user
       tags:
       - Auth
