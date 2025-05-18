@@ -74,6 +74,11 @@ func (a *AuthUseCase) Login(req *dto.LoginRequest, ctx context.Context) (*dto.Lo
 		return nil, errorEntity.ErrUserNotFound
 	}
 
+	if existingUser.EmailVerified == nil {
+		logrus.Error("Email not verified")
+		return nil, errorEntity.ErrEmailNotVerified
+	}
+
 	if !util.ComparePassword(existingUser.Password, req.Password, a.cfg.Server.Salt) {
 		logrus.Error("Invalid password")
 		return nil, errorEntity.ErrInvalidPassword
@@ -142,11 +147,31 @@ func (a *AuthUseCase) Logout(req *dto.LogoutRequest, user *entity.User, accessTo
 		return errorEntity.ErrTokenAlreadyBlacklisted
 	}
 
-	expireDuration, _ := tm.ParseDuration(a.cfg.Jwt.RefreshTokenExpire)
-	err = a.redis.Set(fmt.Sprintf("blacklist:%s", req.RefreshToken), "blacklisted", expireDuration)
+	errCh := make(chan error, 2)
 
-	expireDuration, _ = tm.ParseDuration(a.cfg.Jwt.AccessTokenExpire)
-	err = a.redis.Set(fmt.Sprintf("blacklist:%s", accessToken), "blacklisted", expireDuration)
+	go func() {
+		expireDuration, _ := tm.ParseDuration(a.cfg.Jwt.RefreshTokenExpire)
+		errCh <- a.redis.Set(fmt.Sprintf("blacklist:%s", req.RefreshToken), "blacklisted", expireDuration)
+	}()
+
+	go func() {
+		expireDuration, _ := tm.ParseDuration(a.cfg.Jwt.AccessTokenExpire)
+		errCh <- a.redis.Set(fmt.Sprintf("blacklist:%s", accessToken), "blacklisted", expireDuration)
+	}()
+
+	var combinedErr error
+	for i := 0; i < 2; i++ {
+		if err := <-errCh; err != nil {
+			logrus.Error("Failed to set blacklist key:", err)
+			combinedErr = err
+		}
+	}
+	close(errCh)
+
+	if combinedErr != nil {
+		logrus.Error("Failed to set blacklist key")
+		return combinedErr
+	}
 
 	logrus.Info("User logged out successfully")
 
@@ -196,4 +221,104 @@ func (a *AuthUseCase) RefreshToken(req *dto.RefreshTokenRequest, user *entity.Us
 	}
 
 	return &dto.RefreshTokenResponse{AccessToken: token}, nil
+}
+
+func (a *AuthUseCase) SendOtp(body *dto.SendOtpRequest, ctx context.Context) error {
+	existingUser, err := a.repo.FindByEmail(ctx, body.Email)
+	if err != nil {
+		logrus.Error("User not found")
+		return errorEntity.ErrUserNotFound
+	}
+
+	limitKey := fmt.Sprintf("otp_limit:%s", existingUser.UUID)
+
+	count, err := a.redis.Incr(limitKey)
+	if err != nil {
+		logrus.WithError(err).Error("Failed to increment OTP limit key")
+		return fmt.Errorf("internal error")
+	}
+
+	if count == 1 {
+		err = a.redis.Expire(limitKey, 5*tm.Minute)
+		if err != nil {
+			logrus.WithError(err).Error("Failed to set expiry on OTP limit key")
+			return fmt.Errorf("internal error")
+		}
+	}
+
+	if count > 5 {
+		logrus.Warn("OTP request limit exceeded")
+		return errorEntity.ErrLimitExceeded
+	}
+
+	otp := util.GenerateOTP()
+
+	go func(email, otp string) {
+		err := a.mail.SendMail(email, "OTP Verification", fmt.Sprintf("Your OTP is: %s, This will expired after 5 minutes", otp))
+		if err != nil {
+			logrus.WithError(err).Error("Failed to send OTP email")
+		}
+	}(existingUser.Email, otp)
+
+	err = a.redis.Set(fmt.Sprintf("otp:%s", existingUser.UUID), otp, 5*tm.Minute)
+	if err != nil {
+		logrus.Error("Failed to set OTP in Redis")
+		return err
+	}
+
+	logrus.Info("OTP sent successfully")
+	return nil
+}
+
+func (a *AuthUseCase) VerifyEmail(req *dto.VerifyEmailRequest, ctx context.Context) error {
+	existingUser, err := a.repo.FindByEmail(ctx, req.Email)
+	if err != nil {
+		logrus.Error("User not found")
+		return errorEntity.ErrUserNotFound
+	}
+
+	otp, err := a.redis.Get(fmt.Sprintf("otp:%s", existingUser.UUID))
+	if err != nil {
+		logrus.Error("Failed to get OTP from Redis")
+		return errorEntity.ErrOtpNotFound
+	}
+
+	if otp != req.Otp {
+		logrus.Error("Invalid OTP")
+		return errorEntity.ErrInvalidOtp
+	}
+
+	err = a.repo.UpdateEmailVerified(ctx, existingUser.UUID)
+	if err != nil {
+		logrus.Error("Failed to update email verified status")
+		return err
+	}
+
+	errCh := make(chan error, 2)
+
+	go func() {
+		errCh <- a.redis.Delete(fmt.Sprintf("otp:%s", existingUser.UUID))
+	}()
+
+	go func() {
+		errCh <- a.redis.Delete(fmt.Sprintf("otp_limit:%s", existingUser.UUID))
+	}()
+
+	var combinedErr error
+	for i := 0; i < 2; i++ {
+		if err := <-errCh; err != nil {
+			logrus.Error("Failed to delete OTP related key from Redis:", err)
+			combinedErr = err
+		}
+	}
+
+	if combinedErr != nil {
+		logrus.Error("Failed to delete OTP related key from Redis")
+		return combinedErr
+	}
+
+	close(errCh)
+
+	logrus.Info("Email verified successfully")
+	return nil
 }

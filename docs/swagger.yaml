@@ -66,11 +66,32 @@ definitions:
     - name
     - password
     type: object
+  dto.SendOtpRequest:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+    required:
+    - email
+    type: object
+  dto.VerifyEmailRequest:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      otp:
+        type: string
+    required:
+    - email
+    - otp
+    type: object
   entity.User:
     properties:
       created_at:
         type: string
       email:
+        type: string
+      email_verified:
         type: string
       name:
         type: string
@@ -258,6 +279,74 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       summary: Register a new user
+      tags:
+      - Auth
+  /auth/send-otp:
+    post:
+      consumes:
+      - application/json
+      description: Send OTP to user's email
+      parameters:
+      - description: Send OTP Request
+        in: body
+        name: sendOtp
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SendOtpRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OTP sent successfully
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Send OTP
+      tags:
+      - Auth
+  /auth/verify-email:
+    post:
+      consumes:
+      - application/json
+      description: Verify email using OTP
+      parameters:
+      - description: Verify Email Request
+        in: body
+        name: verifyEmail
+        required: true
+        schema:
+          $ref: '#/definitions/dto.VerifyEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Email verified successfully
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Verify email
       tags:
       - Auth
 securityDefinitions:

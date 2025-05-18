@@ -74,7 +74,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	token, err := h.auth.Login(&req, c.Request.Context())
 	if err != nil {
-		if util.ErrorInList(err, errorEntity.ErrInvalidPassword, errorEntity.ErrUserNotFound) {
+		if util.ErrorInList(err, errorEntity.ErrInvalidPassword, errorEntity.ErrUserNotFound, errorEntity.ErrEmailNotVerified) {
 			response.Unauthorized(c, "unauthorized", err)
 		} else {
 			response.InternalServerError(c, err)
@@ -127,11 +127,10 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	if err != nil {
 		if util.ErrorInList(err, errorEntity.ErrInvalidToken, errorEntity.ErrInvalidUser, errorEntity.ErrTokenAlreadyBlacklisted) {
 			response.Unauthorized(c, "unauthorized", err)
-			return
 		} else {
 			response.InternalServerError(c, err)
-			return
 		}
+		return
 	}
 
 	response.OK(c, "user logged out successfully", nil)
@@ -167,12 +166,75 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	if err != nil {
 		if util.ErrorInList(err, errorEntity.ErrInvalidToken, errorEntity.ErrTokenAlreadyBlacklisted, errorEntity.ErrInvalidUser) {
 			response.Unauthorized(c, "unauthorized", err)
-			return
 		} else {
 			response.InternalServerError(c, err)
-			return
 		}
+		return
 	}
 
 	response.OK(c, "access token refreshed successfully", token)
+}
+
+// SendOtp godoc
+// @Summary Send OTP
+// @Description Send OTP to user's email
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param sendOtp body dto.SendOtpRequest true "Send OTP Request"
+// @Success 200 {object} response.Response "OTP sent successfully"
+// @Failure 400 {object} response.ErrorResponse "invalid request"
+// @Failure 401 {object} response.ErrorResponse "unauthorized"
+// @Failure 500 {object} response.ErrorResponse "internal server error"
+// @Router /auth/send-otp [post]
+func (h *AuthHandler) SendOtp(c *gin.Context) {
+	body, err := util.GetBody[dto.SendOtpRequest](c, "body")
+	if err != nil {
+		response.BadRequest(c, "invalid request", err)
+		return
+	}
+
+	err = h.auth.SendOtp(&body, c.Request.Context())
+	if err != nil {
+		if util.ErrorInList(err, errorEntity.ErrUserNotFound) {
+			response.Unauthorized(c, "unauthorized", err)
+		} else {
+			response.InternalServerError(c, err)
+		}
+		return
+	}
+
+	response.OK(c, "OTP sent successfully", nil)
+}
+
+// VerifyEmail godoc
+// @Summary Verify email
+// @Description Verify email using OTP
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param verifyEmail body dto.VerifyEmailRequest true "Verify Email Request"
+// @Success 200 {object} response.Response "Email verified successfully"
+// @Failure 400 {object} response.ErrorResponse "invalid request"
+// @Failure 401 {object} response.ErrorResponse "unauthorized"
+// @Failure 500 {object} response.ErrorResponse "internal server error"
+// @Router /auth/verify-email [post]
+func (h *AuthHandler) VerifyEmail(c *gin.Context) {
+	body, err := util.GetBody[dto.VerifyEmailRequest](c, "body")
+	if err != nil {
+		response.BadRequest(c, "invalid request", err)
+		return
+	}
+
+	err = h.auth.VerifyEmail(&body, c.Request.Context())
+	if err != nil {
+		if util.ErrorInList(err, errorEntity.ErrInvalidOtp, errorEntity.ErrUserNotFound) {
+			response.Unauthorized(c, "unauthorized", err)
+		} else {
+			response.InternalServerError(c, err)
+		}
+		return
+	}
+
+	response.OK(c, "Email verified successfully", nil)
 }

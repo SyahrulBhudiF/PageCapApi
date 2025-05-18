@@ -14,6 +14,10 @@ var (
 	ErrUserAlreadyExists  = errors.New("user already exists")
 	ErrUserNotFound       = errors.New("user not found")
 	ErrAuthHeaderNotFound = errors.New("authorization header not found")
+	ErrOtpNotFound        = errors.New("otp not found")
+	ErrInvalidOtp         = errors.New("invalid otp")
+	ErrLimitExceeded      = errors.New("limit exceeded")
+	ErrEmailNotVerified   = errors.New("email not verified")
 )
 
 // Request validation errors

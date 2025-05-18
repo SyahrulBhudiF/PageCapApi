@@ -34,6 +34,15 @@ type RefreshTokenResponse struct {
 	AccessToken string `json:"access_token" binding:"required"`
 }
 
+type SendOtpRequest struct {
+	Email string `json:"email" binding:"required,email" example:"john@example.com"`
+}
+
+type VerifyEmailRequest struct {
+	Email string `json:"email" binding:"required" example:"john@example.com"`
+	Otp   string `json:"otp" binding:"required"`
+}
+
 var passwordPattern = `^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$`
 
 func (r RegisterRequest) Validate() error {

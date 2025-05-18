@@ -14,4 +14,13 @@ type Service interface {
 
 	// Exists checks if a key exists in Redis
 	Exists(key string) (bool, error)
+
+	// Incr increments the integer value of a key by one
+	Incr(key string) (int64, error)
+
+	// Decr decrements the integer value of a key by one
+	Decr(key string) (int64, error)
+
+	// Expire sets a new expiration time for a key
+	Expire(key string, expiration time.Duration) error
 }
