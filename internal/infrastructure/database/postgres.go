@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/entity"
 	"github.com/SyahrulBhudiF/Doc-Management.git/pkg/config"
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
@@ -61,4 +62,22 @@ func NewPostgresDB(cfg *config.Config) (*gorm.DB, error) {
 
 	logrus.Info("Connected to PostgreSQL database")
 	return db, nil
+}
+
+func Migrate(db *gorm.DB) error {
+	err := db.Migrator().DropTable(
+		&entity.User{},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to drop tables: %w", err)
+	}
+
+	if err := db.AutoMigrate(
+		&entity.User{},
+	); err != nil {
+		return fmt.Errorf("failed to migrate database: %w", err)
+	}
+
+	logrus.Info("Database migrations completed successfully")
+	return nil
 }

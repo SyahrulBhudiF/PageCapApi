@@ -66,7 +66,7 @@ func (j *Service) ValidateToken(tokenString string, key string) (*jwtContract.Us
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return key, nil
+		return []byte(key), nil
 	})
 
 	if err != nil {
@@ -128,7 +128,7 @@ func (j *Service) generateToken(userID uuid.UUID, email string, duration time.Du
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(key)
+	tokenString, err := token.SignedString([]byte(key))
 	if err != nil {
 		return "", fmt.Errorf("failed to sign token: %w", err)
 	}

@@ -2,7 +2,9 @@ package util
 
 import (
 	"crypto/rand"
+	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"math/big"
 )
@@ -31,4 +33,29 @@ func GenerateOTP() string {
 	n, _ := rand.Int(rand.Reader, mx)
 
 	return fmt.Sprintf("%06d", n)
+}
+
+func GetBody[T any](c *gin.Context, key string) (T, error) {
+	val, exists := c.Get(key)
+	if !exists {
+		var zero T
+		return zero, fmt.Errorf("request %s not found", key)
+	}
+
+	body, ok := val.(*T)
+	if !ok {
+		var zero T
+		return zero, fmt.Errorf("invalid request %s type", key)
+	}
+
+	return *body, nil
+}
+
+func ErrorInList(err error, targets ...error) bool {
+	for _, target := range targets {
+		if errors.Is(err, target) {
+			return true
+		}
+	}
+	return false
 }

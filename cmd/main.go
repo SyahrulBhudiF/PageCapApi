@@ -3,8 +3,19 @@ package main
 import (
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/core"
 	"github.com/sirupsen/logrus"
+	_ "github.com/swaggo/files"
+	_ "github.com/swaggo/gin-swagger"
 )
 
+// @title Doc Management API
+// @version 1.0
+// @description This is a sample server for Doc Management API.
+// @host localhost:8080
+// @BasePath /api/v1
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
 func main() {
 	app, err := core.Bootstrap()
 	if err != nil {

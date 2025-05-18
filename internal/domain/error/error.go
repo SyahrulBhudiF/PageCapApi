@@ -13,6 +13,7 @@ var (
 	ErrEmailAlreadyExists = errors.New("email already registered")
 	ErrUserAlreadyExists  = errors.New("user already exists")
 	ErrUserNotFound       = errors.New("user not found")
+	ErrAuthHeaderNotFound = errors.New("authorization header not found")
 )
 
 // Request validation errors
@@ -23,7 +24,9 @@ var (
 
 // Token Error
 var (
-	ErrInvalidToken  = errors.New("invalid token")
-	ErrTokenExpired  = errors.New("token has expired")
-	ErrTokenMismatch = errors.New("token hash mismatch")
+	ErrTokenNotFound           = errors.New("token not found")
+	ErrInvalidToken            = errors.New("invalid token")
+	ErrTokenExpired            = errors.New("token has expired")
+	ErrTokenMismatch           = errors.New("token hash mismatch")
+	ErrTokenAlreadyBlacklisted = errors.New("token already blacklisted")
 )

@@ -30,6 +30,7 @@ func EnsureJsonValidRequest[T any]() gin.HandlerFunc {
 
 		if err := c.ShouldBindJSON(body); err != nil {
 			response.BadRequest(c, "invalid request", err)
+			c.Abort()
 			return
 		}
 
@@ -42,12 +43,14 @@ func EnsureJsonValidRequest[T any]() gin.HandlerFunc {
 				errStr += fmt.Sprintf("%s %s", e.Field(), e.Tag())
 			}
 			response.BadRequest(c, "invalid request", fmt.Errorf(errStr))
+			c.Abort()
 			return
 		}
 
 		if custom, ok := any(body).(CustomValidatable); ok {
 			if err := custom.Validate(); err != nil {
 				response.BadRequest(c, "invalid request", err)
+				c.Abort()
 				return
 			}
 		}
