@@ -1,5 +1,21 @@
 basePath: /api/v1
 definitions:
+  dto.ForgotPasswordRequest:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      otp:
+        type: string
+      password:
+        example: <PASSWORD>!@#
+        minLength: 8
+        type: string
+    required:
+    - email
+    - otp
+    - password
+    type: object
   dto.LoginRequest:
     properties:
       email:
@@ -30,6 +46,20 @@ definitions:
     required:
     - refresh_token
     type: object
+  dto.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  dto.RefreshTokenResponse:
+    properties:
+      access_token:
+        type: string
+    required:
+    - access_token
+    type: object
   dto.RegisterRequest:
     properties:
       confirm:
@@ -52,11 +82,46 @@ definitions:
     - name
     - password
     type: object
+  dto.SendOtpRequest:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+    required:
+    - email
+    type: object
+  dto.SetPasswordRequest:
+    properties:
+      confirm:
+        example: <PASSWORD>!@#
+        minLength: 8
+        type: string
+      password:
+        example: <PASSWORD>!@#
+        minLength: 8
+        type: string
+    required:
+    - confirm
+    - password
+    type: object
+  dto.VerifyEmailRequest:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      otp:
+        type: string
+    required:
+    - email
+    - otp
+    type: object
   entity.User:
     properties:
       created_at:
         type: string
       email:
+        type: string
+      email_verified:
         type: string
       name:
         type: string
@@ -68,6 +133,15 @@ definitions:
         type: string
       uuid:
         type: string
+    type: object
+  response.ErrorResponse:
+    properties:
+      error:
+        type: string
+      message:
+        type: string
+      status:
+        type: integer
     type: object
   response.Response:
     properties:
@@ -86,6 +160,99 @@ info:
   title: Doc Management API
   version: "1.0"
 paths:
+  /auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Reset password using OTP
+      parameters:
+      - description: Forgot Password Request
+        in: body
+        name: forgotPassword
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password reset successfully
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Forgot password
+      tags:
+      - Auth
+  /auth/google:
+    get:
+      consumes:
+      - application/json
+      description: Login using Google OAuth2
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Google login successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Google login
+      tags:
+      - Auth
+  /auth/google/callback:
+    get:
+      consumes:
+      - application/json
+      description: Callback URL for Google OAuth2
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Google login successful
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.LoginResponse'
+              type: object
+        "400":
+          description: invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Google callback
+      tags:
+      - Auth
   /auth/login:
     post:
       consumes:
@@ -113,15 +280,15 @@ paths:
         "400":
           description: invalid request
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: unauthorized
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: internal server error
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
       summary: Login user
       tags:
       - Auth
@@ -147,18 +314,59 @@ paths:
         "400":
           description: invalid request
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: unauthorized
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: internal server error
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Logout user
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh access token using refresh token
+      parameters:
+      - description: Refresh Token Request
+        in: body
+        name: refresh
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: access token refreshed successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RefreshTokenResponse'
+              type: object
+        "400":
+          description: invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Refresh access token
       tags:
       - Auth
   /auth/register:
@@ -188,12 +396,116 @@ paths:
         "400":
           description: invalid request
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: internal server error
           schema:
-            $ref: '#/definitions/response.Response'
+            $ref: '#/definitions/response.ErrorResponse'
       summary: Register a new user
+      tags:
+      - Auth
+  /auth/send-otp:
+    post:
+      consumes:
+      - application/json
+      description: Send OTP to user's email
+      parameters:
+      - description: Send OTP Request
+        in: body
+        name: sendOtp
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SendOtpRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OTP sent successfully
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Send OTP
+      tags:
+      - Auth
+  /auth/set-password:
+    post:
+      consumes:
+      - application/json
+      description: Set password for the user after Google login
+      parameters:
+      - description: Set Password Request
+        in: body
+        name: setPassword
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password set successfully
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Set password
+      tags:
+      - Auth
+  /auth/verify-email:
+    post:
+      consumes:
+      - application/json
+      description: Verify email using OTP
+      parameters:
+      - description: Verify Email Request
+        in: body
+        name: verifyEmail
+        required: true
+        schema:
+          $ref: '#/definitions/dto.VerifyEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Email verified successfully
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Verify email
       tags:
       - Auth
 securityDefinitions:

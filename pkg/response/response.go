@@ -5,6 +5,12 @@ import (
 	"net/http"
 )
 
+type ErrorResponse struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+	Error   string `json:"error"`
+}
+
 type Response struct {
 	Status  int         `json:"status"`
 	Message string      `json:"message"`

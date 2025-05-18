@@ -3,6 +3,7 @@ package jwt
 import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"time"
 )
 
 type UserClaims struct {
@@ -16,4 +17,5 @@ type Service interface {
 	ValidateToken(tokenString string, key string) (*UserClaims, error)
 	HashToken(token string) (string, error)
 	CompareTokenHash(token, hash string) error
+	GenerateSingleToken(userID uuid.UUID, email string, expire time.Duration, secret string) (string, error)
 }
