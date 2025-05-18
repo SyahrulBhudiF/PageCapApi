@@ -5,6 +5,7 @@ import (
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/contract/jwt"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/contract/redis"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/contract/repository"
+	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/dto"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/entity"
 	errorEntity "github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/error"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/mail"
@@ -31,7 +32,7 @@ func NewAuthUseCase(repo repository.UserRepository, jwt jwt.Service, redis redis
 	}
 }
 
-func (a *AuthUseCase) Register(user *entity.User, ctx context.Context) (*entity.User, error) {
+func (a *AuthUseCase) Register(user *dto.RegisterRequest, ctx context.Context) (*entity.User, error) {
 	existingUser, _ := a.repo.FindByEmail(ctx, user.Email)
 
 	if existingUser != nil {

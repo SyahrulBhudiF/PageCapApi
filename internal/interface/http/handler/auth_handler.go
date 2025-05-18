@@ -2,8 +2,7 @@ package handler
 
 import (
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/application/usecase"
-	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/entity"
-	"github.com/SyahrulBhudiF/Doc-Management.git/internal/interface/http/dto"
+	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/dto"
 	"github.com/SyahrulBhudiF/Doc-Management.git/pkg/response"
 	"github.com/gin-gonic/gin"
 )
@@ -42,11 +41,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	newUser, err := h.auth.Register(&entity.User{
-		Email:    req.Email,
-		Password: req.Password,
-		Name:     req.Name,
-	}, c.Request.Context())
+	newUser, err := h.auth.Register(&req, c.Request.Context())
 	if err != nil {
 		response.InternalServerError(c, err)
 		return
