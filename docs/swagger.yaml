@@ -1,5 +1,35 @@
 basePath: /api/v1
 definitions:
+  dto.LoginRequest:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      password:
+        example: Pass123!@#
+        minLength: 8
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.LoginResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    required:
+    - access_token
+    - refresh_token
+    type: object
+  dto.LogoutRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
   dto.RegisterRequest:
     properties:
       confirm:
@@ -56,6 +86,81 @@ info:
   title: Doc Management API
   version: "1.0"
 paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login user with email and password
+      parameters:
+      - description: Login Request
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: user logged in successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.LoginResponse'
+              type: object
+        "400":
+          description: invalid request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Login user
+      tags:
+      - Auth
+  /auth/logout:
+    delete:
+      consumes:
+      - application/json
+      description: Logout user and invalidate the refresh token
+      parameters:
+      - description: Logout Request
+        in: body
+        name: logout
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LogoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: user logged out successfully
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: invalid request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Logout user
+      tags:
+      - Auth
   /auth/register:
     post:
       consumes:
@@ -91,4 +196,10 @@ paths:
       summary: Register a new user
       tags:
       - Auth
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

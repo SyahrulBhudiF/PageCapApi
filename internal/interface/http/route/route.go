@@ -2,17 +2,20 @@ package route
 
 import (
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/interface/http/handler"
+	"github.com/SyahrulBhudiF/Doc-Management.git/internal/interface/http/midleware"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 type Route struct {
-	AuthHandler *handler.AuthHandler
+	AuthHandler    *handler.AuthHandler
+	AuthMiddleware *midleware.AuthMiddleware
 }
 
-func NewRoute(authHandler *handler.AuthHandler) *Route {
+func NewRoute(authHandler *handler.AuthHandler, middleware *midleware.AuthMiddleware) *Route {
 	return &Route{
-		AuthHandler: authHandler,
+		AuthHandler:    authHandler,
+		AuthMiddleware: middleware,
 	}
 }
 
@@ -29,7 +32,7 @@ func (r *Route) RegisterRoutes() *gin.Engine {
 	v1 := router.Group("/api/v1")
 	{
 		// Auth
-		RegisterAuthRoutes(v1, r.AuthHandler)
+		RegisterAuthRoutes(v1, r.AuthHandler, r.AuthMiddleware)
 	}
 
 	return router

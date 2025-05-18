@@ -6,7 +6,9 @@ import (
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/database"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/jwt"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/mail"
+	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/persistence"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/redis"
+	"github.com/SyahrulBhudiF/Doc-Management.git/internal/interface/http/midleware"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/interface/http/route"
 	"github.com/SyahrulBhudiF/Doc-Management.git/pkg/config"
 	"github.com/gin-gonic/gin"
@@ -39,12 +41,18 @@ func Bootstrap() (*App, error) {
 	mailService := mail.NewMailService(cfg)
 	redisRepo := redis.NewRedisService(rd, "client")
 
+	// Repositories
+	userRepo := persistence.NewUserRepository(db)
+
+	// Initialize middleware
+	authMiddleware := midleware.NewAuthMiddleware(userRepo, redisRepo, jwtService, cfg)
+
 	// Initialize Modules
-	authHandler := module.InitAuthModule(cfg, db, jwtService, mailService, redisRepo)
+	authHandler := module.InitAuthModule(cfg, userRepo, jwtService, mailService, redisRepo)
 
 	// Router
 	docs.SwaggerInfo.BasePath = "/api/v1"
-	r := route.NewRoute(authHandler)
+	r := route.NewRoute(authHandler, authMiddleware)
 	router := r.RegisterRoutes()
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 

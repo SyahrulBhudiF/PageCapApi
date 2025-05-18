@@ -12,6 +12,20 @@ type RegisterRequest struct {
 	Confirm  string `json:"confirm" binding:"required,min=8" example:"Pass123!@#"`
 }
 
+type LoginRequest struct {
+	Email    string `json:"email" binding:"required,email" example:"john@example.com"`
+	Password string `json:"password" binding:"required,min=8" example:"Pass123!@#"`
+}
+
+type LoginResponse struct {
+	AccessToken  string `json:"access_token" binding:"required"`
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
+type LogoutRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
 var passwordPattern = `^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$`
 
 func (r RegisterRequest) Validate() error {
