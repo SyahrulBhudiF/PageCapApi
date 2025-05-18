@@ -238,3 +238,35 @@ func (h *AuthHandler) VerifyEmail(c *gin.Context) {
 
 	response.OK(c, "Email verified successfully", nil)
 }
+
+// ForgotPassword godoc
+// @Summary Forgot password
+// @Description Reset password using OTP
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param forgotPassword body dto.ForgotPasswordRequest true "Forgot Password Request"
+// @Success 200 {object} response.Response "Password reset successfully"
+// @Failure 400 {object} response.ErrorResponse "invalid request"
+// @Failure 401 {object} response.ErrorResponse "unauthorized"
+// @Failure 500 {object} response.ErrorResponse "internal server error"
+// @Router /auth/forgot-password [post]
+func (h *AuthHandler) ForgotPassword(c *gin.Context) {
+	body, err := util.GetBody[dto.ForgotPasswordRequest](c, "body")
+	if err != nil {
+		response.BadRequest(c, "invalid request", err)
+		return
+	}
+
+	err = h.auth.ForgotPassword(&body, c.Request.Context())
+	if err != nil {
+		if util.ErrorInList(err, errorEntity.ErrInvalidOtp, errorEntity.ErrUserNotFound) {
+			response.Unauthorized(c, "unauthorized", err)
+		} else {
+			response.InternalServerError(c, err)
+		}
+		return
+	}
+
+	response.OK(c, "Password reset successfully", nil)
+}

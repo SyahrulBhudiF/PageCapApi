@@ -322,3 +322,58 @@ func (a *AuthUseCase) VerifyEmail(req *dto.VerifyEmailRequest, ctx context.Conte
 	logrus.Info("Email verified successfully")
 	return nil
 }
+
+func (a *AuthUseCase) ForgotPassword(req *dto.ForgotPasswordRequest, ctx context.Context) error {
+	existingUser, err := a.repo.FindByEmail(ctx, req.Email)
+	if err != nil {
+		logrus.Error("User not found")
+		return errorEntity.ErrUserNotFound
+	}
+
+	otp, err := a.redis.Get(fmt.Sprintf("otp:%s", existingUser.UUID))
+	if err != nil {
+		logrus.Error("Failed to get OTP from Redis")
+		return errorEntity.ErrOtpNotFound
+	}
+
+	if otp != req.Otp {
+		logrus.Error("Invalid OTP")
+		return errorEntity.ErrInvalidOtp
+	}
+
+	hashedPassword := util.HashPassword(req.Password, a.cfg.Server.Salt)
+	existingUser.Password = hashedPassword
+	existingUser.UpdatedAt = tm.Now()
+
+	err = a.repo.Update(ctx, existingUser)
+	if err != nil {
+		logrus.Error("Failed to update user password")
+		return err
+	}
+
+	errCh := make(chan error, 2)
+	go func() {
+		errCh <- a.redis.Delete(fmt.Sprintf("otp:%s", existingUser.UUID))
+	}()
+
+	go func() {
+		errCh <- a.redis.Delete(fmt.Sprintf("otp_limit:%s", existingUser.UUID))
+	}()
+
+	var combinedErr error
+	for i := 0; i < 2; i++ {
+		if err := <-errCh; err != nil {
+			logrus.Error("Failed to delete OTP related key from Redis:", err)
+			combinedErr = err
+		}
+	}
+	if combinedErr != nil {
+		logrus.Error("Failed to delete OTP related key from Redis")
+		return combinedErr
+	}
+
+	close(errCh)
+
+	logrus.Info("Password updated successfully")
+	return nil
+}

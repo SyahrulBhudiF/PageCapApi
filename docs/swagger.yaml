@@ -1,5 +1,21 @@
 basePath: /api/v1
 definitions:
+  dto.ForgotPasswordRequest:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      otp:
+        type: string
+      password:
+        example: <PASSWORD>!@#
+        minLength: 8
+        type: string
+    required:
+    - email
+    - otp
+    - password
+    type: object
   dto.LoginRequest:
     properties:
       email:
@@ -130,6 +146,40 @@ info:
   title: Doc Management API
   version: "1.0"
 paths:
+  /auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Reset password using OTP
+      parameters:
+      - description: Forgot Password Request
+        in: body
+        name: forgotPassword
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password reset successfully
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Forgot password
+      tags:
+      - Auth
   /auth/login:
     post:
       consumes:
