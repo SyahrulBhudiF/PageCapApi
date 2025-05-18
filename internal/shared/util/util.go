@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 	"math/big"
 )
@@ -38,7 +37,6 @@ func GenerateOTP() string {
 
 func GetBody[T any](c *gin.Context, key string) (T, error) {
 	val, exists := c.Get(key)
-	logrus.Info(val, exists)
 	if !exists {
 		var zero T
 		return zero, fmt.Errorf("request %s not found", key)

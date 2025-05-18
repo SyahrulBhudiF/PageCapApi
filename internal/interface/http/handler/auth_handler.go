@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/application/usecase"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/dto"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/entity"
@@ -105,16 +106,32 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	}
 
 	user, err := util.GetBody[entity.User](c, "user")
-	accessToken, _ := c.Get("accessToken")
+	if err != nil {
+		response.BadRequest(c, "invalid request", err)
+		return
+	}
 
-	err = h.auth.Logout(&body, &user, accessToken.(string), c.Request.Context())
+	accessTokenRaw, exists := c.Get("accessToken")
+	if !exists {
+		response.BadRequest(c, "invalid request", fmt.Errorf("accessToken not found"))
+		return
+	}
+
+	accessToken, ok := accessTokenRaw.(string)
+	if !ok {
+		response.BadRequest(c, "invalid request", fmt.Errorf("invalid accessToken type"))
+		return
+	}
+
+	err = h.auth.Logout(&body, &user, accessToken, c.Request.Context())
 	if err != nil {
 		if util.ErrorInList(err, errorEntity.ErrInvalidToken, errorEntity.ErrInvalidUser, errorEntity.ErrTokenAlreadyBlacklisted) {
 			response.Unauthorized(c, "unauthorized", err)
+			return
 		} else {
 			response.InternalServerError(c, err)
+			return
 		}
-		return
 	}
 
 	response.OK(c, "user logged out successfully", nil)

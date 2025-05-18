@@ -2,7 +2,6 @@ package midleware
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/contract/jwt"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/contract/redis"
@@ -10,6 +9,7 @@ import (
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/entity"
 	errorEntity "github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/error"
 	entity2 "github.com/SyahrulBhudiF/Doc-Management.git/internal/shared/entity"
+	"github.com/SyahrulBhudiF/Doc-Management.git/internal/shared/util"
 	"github.com/SyahrulBhudiF/Doc-Management.git/pkg/config"
 	"github.com/SyahrulBhudiF/Doc-Management.git/pkg/response"
 	"github.com/gin-gonic/gin"
@@ -37,23 +37,35 @@ func (m *AuthMiddleware) EnsureAuthenticated() gin.HandlerFunc {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
 			response.Unauthorized(c, "unauthorized", errorEntity.ErrAuthHeaderNotFound)
+			c.Abort()
+			return
 		}
 
 		parts := strings.Split(authHeader, "Bearer ")
 		if len(parts) != 2 {
 			response.Unauthorized(c, "unauthorized", errorEntity.ErrTokenNotFound)
+			c.Abort()
+			return
 		}
 
 		token := strings.TrimSpace(parts[1])
+
+		if existingToken, err := m.redis.Get(fmt.Sprintf("blacklist:%s", token)); err == nil && existingToken != "" {
+			response.Unauthorized(c, "unauthorized", errorEntity.ErrTokenAlreadyBlacklisted)
+			c.Abort()
+			return
+		}
+
 		claims, err := m.jwt.ValidateToken(token, m.cfg.Jwt.AccessTokenSecret)
 		if err != nil {
-			switch {
-			case errors.Is(err, errorEntity.ErrTokenExpired):
-				response.Unauthorized(c, "unauthorized", errorEntity.ErrTokenExpired)
-			case errors.Is(err, errorEntity.ErrInvalidToken):
-				response.Unauthorized(c, "unauthorized", errorEntity.ErrInvalidToken)
-			default:
+			if util.ErrorInList(err, errorEntity.ErrTokenExpired, errorEntity.ErrInvalidToken) {
+				response.Unauthorized(c, "unauthorized", err)
+				c.Abort()
+				return
+			} else {
 				response.InternalServerError(c, err)
+				c.Abort()
+				return
 			}
 		}
 
@@ -64,6 +76,7 @@ func (m *AuthMiddleware) EnsureAuthenticated() gin.HandlerFunc {
 				c.Set("accessToken", token)
 				c.Set("user", &user)
 				c.Next()
+				return
 			}
 		}
 
@@ -75,14 +88,18 @@ func (m *AuthMiddleware) EnsureAuthenticated() gin.HandlerFunc {
 
 		if err := m.user.Find(c, &user); err != nil {
 			response.Unauthorized(c, "unauthorized", errorEntity.ErrUserNotFound)
+			c.Abort()
+			return
 		}
 
 		jsonUser, _ := json.Marshal(user)
 		if err := m.redis.Set(fmt.Sprintf("user:%s", claims.UUID), jsonUser, 0); err != nil {
 			response.InternalServerError(c, err)
+			c.Abort()
+			return
 		}
 
-		c.Set("accessToken", token)
+		c.Set("accessToken", &token)
 		c.Set("user", &user)
 
 		c.Next()
