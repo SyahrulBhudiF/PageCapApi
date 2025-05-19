@@ -3,10 +3,10 @@ package core
 import (
 	docs "github.com/SyahrulBhudiF/Doc-Management.git/docs"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/core/module"
-	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/Oauth2/Google"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/database"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/jwt"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/mail"
+	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/oauth2/google"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/persistence"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/redis"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/interface/http/midleware"
@@ -45,7 +45,7 @@ func Bootstrap() (*App, error) {
 	redisRepo := redis.NewRedisService(rd, "client")
 
 	// Initialize Oauth2 providers
-	Google.NewGoogle(cfg)
+	google.NewGoogle(cfg)
 	gothic.GetProviderName = func(r *http.Request) (string, error) {
 		return "google", nil
 	}

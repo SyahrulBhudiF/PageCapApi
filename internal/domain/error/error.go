@@ -19,6 +19,7 @@ var (
 	ErrInvalidOtp             = errors.New("invalid otp")
 	ErrLimitExceeded          = errors.New("limit exceeded")
 	ErrEmailNotVerified       = errors.New("email not verified")
+	ErrPasswordNotSet         = errors.New("password not set")
 )
 
 // Request validation errors

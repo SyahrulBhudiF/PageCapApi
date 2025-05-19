@@ -1,5 +1,17 @@
 basePath: /api/v1
 definitions:
+  dto.ChangePasswordRequest:
+    properties:
+      new_password:
+        example: 1Pass123!@#
+        type: string
+      old_password:
+        example: Pass123!@#
+        type: string
+    required:
+    - new_password
+    - old_password
+    type: object
   dto.ForgotPasswordRequest:
     properties:
       email:
@@ -525,6 +537,47 @@ paths:
       summary: Verify email
       tags:
       - Auth
+  /user/change-password:
+    patch:
+      consumes:
+      - application/json
+      description: Change user password
+      parameters:
+      - description: Change Password Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully change user password
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.UserResponse'
+              type: object
+        "400":
+          description: invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Change Password
+      tags:
+      - User
   /user/profile:
     get:
       consumes:

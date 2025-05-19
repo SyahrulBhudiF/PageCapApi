@@ -32,12 +32,12 @@ func ToUserResponse(user entity.User) *UserResponse {
 }
 
 type ChangePasswordRequest struct {
-	OldPassword string `json:"old_password" binding:"required"`
-	NewPassword string `json:"new_password" binding:"required"`
+	OldPassword string `json:"old_password" binding:"required" example:"Pass123!@#"`
+	NewPassword string `json:"new_password" binding:"required" example:"1Pass123!@#"`
 }
 
 func (c ChangePasswordRequest) Validate() error {
-	if c.OldPassword != c.NewPassword {
+	if c.OldPassword == c.NewPassword {
 		return errors.New("new password must be different from old password")
 	}
 
