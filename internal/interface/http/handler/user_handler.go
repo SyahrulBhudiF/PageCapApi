@@ -80,3 +80,42 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 
 	response.OK(c, "successfully change password", nil)
 }
+
+// UpdateUserProfile godoc
+// @Summary      Update User Profile
+// @Description  Update user profile
+// @Tags         User
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        profile_picture  formData  file  true  "Profile file"
+// @Param        name    formData  string  true  "User name"
+// @Success      200  {object}  response.Response{data=dto.UserResponse}
+// @Failure      400  {object}  response.ErrorResponse "invalid request"
+// @Failure      401  {object}  response.ErrorResponse "unauthorized"
+// @Failure      500  {object}  response.ErrorResponse "internal server error"
+// @Security     BearerAuth
+// @Router       /user/profile [patch]
+func (h *UserHandler) UpdateUserProfile(c *gin.Context) {
+	user, err := util.GetBody[entity.User](c, "user")
+	if err != nil {
+		response.BadRequest(c, "invalid request", err)
+		return
+	}
+
+	body, err := util.GetBody[dto.UpdateUserProfileRequest](c, "body")
+	if err != nil {
+		response.BadRequest(c, "invalid request", err)
+		return
+	}
+	err = h.user.UpdateUserProfile(&body, &user, c.Request.Context())
+	if err != nil {
+		if util.ErrorInList(err, errorEntity.ErrUserNotFound) {
+			response.Unauthorized(c, "unauthorized", err)
+			return
+		}
+		response.InternalServerError(c, err)
+		return
+	}
+
+	response.OK(c, "successfully update user profile", dto.ToUserResponse(user))
+}

@@ -2,10 +2,14 @@ package dto
 
 import (
 	"errors"
+	"fmt"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/entity"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/shared/util"
 	"github.com/dlclark/regexp2"
 	"github.com/google/uuid"
+	"mime/multipart"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -36,8 +40,23 @@ type ChangePasswordRequest struct {
 	NewPassword string `json:"new_password" binding:"required" example:"1Pass123!@#"`
 }
 
-type UpdateUserRequest struct {
-	Name string `json:"name" binding:"required" example:"John Doe"`
+type UpdateUserProfileRequest struct {
+	Name           string                `form:"name" binding:"required"`
+	ProfilePicture *multipart.FileHeader `form:"profile_picture" binding:"required" swaggertype:"file"`
+}
+
+func (r UpdateUserProfileRequest) Validate() error {
+	if r.ProfilePicture == nil {
+		return errors.New("profile_picture is required")
+	}
+
+	ext := strings.ToLower(filepath.Ext(r.ProfilePicture.Filename))
+	switch ext {
+	case ".jpg", ".jpeg", ".png", ".webp", ".gif":
+		return nil
+	default:
+		return fmt.Errorf("unsupported image format: %s", ext)
+	}
 }
 
 func (c ChangePasswordRequest) Validate() error {
