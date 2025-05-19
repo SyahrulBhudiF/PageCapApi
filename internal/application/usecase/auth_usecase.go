@@ -409,10 +409,9 @@ func (a *AuthUseCase) GoogleLogin(g *goth.User, ctx context.Context) (*dto.Login
 
 	if user == nil {
 		user = &entity.User{
-			Email:          g.Email,
-			Name:           g.Name,
-			ProfilePicture: g.AvatarURL,
-			EmailVerified:  &now,
+			Email:         g.Email,
+			Name:          g.Name,
+			EmailVerified: &now,
 		}
 		err := a.repo.Create(ctx, user)
 		if err != nil {

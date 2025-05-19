@@ -2,6 +2,7 @@ package dto
 
 import (
 	"errors"
+	"github.com/SyahrulBhudiF/Doc-Management.git/internal/shared/util"
 	"github.com/dlclark/regexp2"
 )
 
@@ -54,10 +55,8 @@ type SetPasswordRequest struct {
 	Confirm  string `json:"confirm" binding:"required,min=8" example:"Password1!@#"`
 }
 
-var passwordPattern = `^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$`
-
 func (r RegisterRequest) Validate() error {
-	re := regexp2.MustCompile(passwordPattern, 0)
+	re := regexp2.MustCompile(util.PasswordPattern, 0)
 	match, err := re.MatchString(r.Password)
 	if err != nil {
 		return errors.New("failed to validate password")
@@ -72,7 +71,7 @@ func (r RegisterRequest) Validate() error {
 }
 
 func (r ForgotPasswordRequest) Validate() error {
-	re := regexp2.MustCompile(passwordPattern, 0)
+	re := regexp2.MustCompile(util.PasswordPattern, 0)
 	match, err := re.MatchString(r.Password)
 	if err != nil {
 		return errors.New("failed to validate password")
@@ -84,7 +83,7 @@ func (r ForgotPasswordRequest) Validate() error {
 }
 
 func (r SetPasswordRequest) Validate() error {
-	re := regexp2.MustCompile(passwordPattern, 0)
+	re := regexp2.MustCompile(util.PasswordPattern, 0)
 	match, err := re.MatchString(r.Password)
 	if err != nil {
 		return errors.New("failed to validate password")

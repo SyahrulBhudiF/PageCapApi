@@ -1,6 +1,9 @@
 package error
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 // Authentication errors
 var (
@@ -19,12 +22,14 @@ var (
 	ErrInvalidOtp             = errors.New("invalid otp")
 	ErrLimitExceeded          = errors.New("limit exceeded")
 	ErrEmailNotVerified       = errors.New("email not verified")
+	ErrPasswordNotSet         = errors.New("password not set")
 )
 
 // Request validation errors
 var (
 	ErrRequestBodyRequired = errors.New("invalid request: request body is required")
 	ErrInvalidRequestBody  = errors.New("invalid request body")
+	ErrInvalidRequest      = fmt.Errorf("invalid request")
 )
 
 // Token Error
@@ -34,4 +39,9 @@ var (
 	ErrTokenExpired            = errors.New("token has expired")
 	ErrTokenMismatch           = errors.New("token hash mismatch")
 	ErrTokenAlreadyBlacklisted = errors.New("token already blacklisted")
+)
+
+var (
+	ErrCloudinaryUpload = fmt.Errorf("cloudinary upload error")
+	ErrImageTooLarge    = fmt.Errorf("image too large")
 )

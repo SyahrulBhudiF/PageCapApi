@@ -1,4 +1,4 @@
-package Google
+package google
 
 import (
 	"github.com/SyahrulBhudiF/Doc-Management.git/pkg/config"

@@ -1,12 +1,29 @@
 package util
 
 import (
+	"bytes"
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/gin-gonic/gin"
+	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/crypto/bcrypt"
 	"math/big"
+	"sync"
+)
+
+var PasswordPattern = `^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$`
+
+var (
+	json             = jsoniter.ConfigCompatibleWithStandardLibrary
+	UploadParamsPool = sync.Pool{
+		New: func() interface{} {
+			return &uploader.UploadParams{
+				ResourceType: "image",
+			}
+		},
+	}
 )
 
 func HashPassword(password string, salt string) string {
@@ -58,4 +75,21 @@ func ErrorInList(err error, targets ...error) bool {
 		}
 	}
 	return false
+}
+
+const OptimalBufferSize = 64 * 1024
+
+var BufferPool = sync.Pool{
+	New: func() interface{} {
+		return bytes.NewBuffer(make([]byte, 0, OptimalBufferSize))
+	},
+}
+
+func GetBuffer() *bytes.Buffer {
+	return BufferPool.Get().(*bytes.Buffer)
+}
+
+func PutBuffer(buf *bytes.Buffer) {
+	buf.Reset()
+	BufferPool.Put(buf)
 }

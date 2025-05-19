@@ -6,12 +6,13 @@ import (
 )
 
 type Config struct {
-	Database DatabaseConfig
-	Server   ServerConfig
-	Jwt      JwtConfig
-	Redis    RedisConfig
-	Mail     MailConfig
-	Oauth2   Oauth2Config
+	Database   DatabaseConfig
+	Server     ServerConfig
+	Jwt        JwtConfig
+	Redis      RedisConfig
+	Mail       MailConfig
+	Oauth2     Oauth2Config
+	Cloudinary CloudinaryConfig
 }
 
 type Oauth2Config struct {
@@ -22,6 +23,12 @@ type GoogleConfig struct {
 	ClientID     string
 	ClientSecret string
 	RedirectURL  string
+}
+
+type CloudinaryConfig struct {
+	CloudName string
+	ApiKey    string
+	ApiSecret string
 }
 
 type DatabaseConfig struct {
@@ -101,6 +108,11 @@ func Load() (*Config, error) {
 				ClientSecret: getEnv("GOOGLE_CLIENT_SECRET", ""),
 				RedirectURL:  getEnv("GOOGLE_REDIRECT_URL", ""),
 			},
+		},
+		Cloudinary: CloudinaryConfig{
+			CloudName: getEnv("CLOUDINARY_CLOUD_NAME", ""),
+			ApiKey:    getEnv("CLOUDINARY_API_KEY", ""),
+			ApiSecret: getEnv("CLOUDINARY_API_SECRET", ""),
 		},
 	}, nil
 }

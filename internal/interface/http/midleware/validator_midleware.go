@@ -60,3 +60,39 @@ func EnsureJsonValidRequest[T any]() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func EnsureMultipartValidRequest[T any]() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		body := new(T)
+
+		if err := c.ShouldBind(body); err != nil {
+			response.BadRequest(c, "invalid request", err)
+			c.Abort()
+			return
+		}
+
+		if err := Validator.Struct(body); err != nil {
+			var errStr string
+			for i, e := range err.(validator.ValidationErrors) {
+				if i > 0 {
+					errStr += ", "
+				}
+				errStr += fmt.Sprintf("%s %s", e.Field(), e.Tag())
+			}
+			response.BadRequest(c, "invalid request", fmt.Errorf(errStr))
+			c.Abort()
+			return
+		}
+
+		if custom, ok := any(body).(CustomValidatable); ok {
+			if err := custom.Validate(); err != nil {
+				response.BadRequest(c, "invalid request", err)
+				c.Abort()
+				return
+			}
+		}
+
+		c.Set("body", body)
+		c.Next()
+	}
+}

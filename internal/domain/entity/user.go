@@ -11,6 +11,7 @@ type User struct {
 	Password       string     `json:"password" gorm:"not null"`
 	Name           string     `json:"name" gorm:"not null"`
 	ProfilePicture string     `json:"profile_picture"`
+	PublicId       string     `json:"public_id"`
 	EmailVerified  *time.Time `json:"email_verified"`
 }
 
