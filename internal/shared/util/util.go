@@ -9,6 +9,8 @@ import (
 	"math/big"
 )
 
+var PasswordPattern = `^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$`
+
 func HashPassword(password string, salt string) string {
 	salted := password + salt
 	hashedByte, err := bcrypt.GenerateFromPassword([]byte(salted), bcrypt.DefaultCost)

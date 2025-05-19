@@ -58,10 +58,11 @@ func Bootstrap() (*App, error) {
 
 	// Initialize Modules
 	authHandler := module.InitAuthModule(cfg, userRepo, jwtService, mailService, redisRepo)
+	userHandler := module.InitUserModule(cfg, userRepo, redisRepo)
 
 	// Router
 	docs.SwaggerInfo.BasePath = "/api/v1"
-	r := route.NewRoute(authHandler, authMiddleware)
+	r := route.NewRoute(authHandler, authMiddleware, userHandler)
 	router := r.RegisterRoutes()
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
