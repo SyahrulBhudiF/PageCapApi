@@ -7,9 +7,9 @@ import (
 	_ "github.com/swaggo/gin-swagger"
 )
 
-// @title Doc Management API
+// @title Page Capture API (PageCapApi)
 // @version 1.0
-// @description This is a sample server for Doc Management API.
+// @description This is a documentation for PageCapApi
 // @host localhost:8080
 // @BasePath /api/v1
 // @securityDefinitions.apikey BearerAuth

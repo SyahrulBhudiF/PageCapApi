@@ -1,8 +1,8 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "This is a sample server for Doc Management API.",
-        "title": "Doc Management API",
+        "description": "This is a documentation for PageCapApi",
+        "title": "Page Capture API (PageCapApi)",
         "contact": {},
         "version": "1.0"
     },
@@ -584,7 +584,7 @@
                 "password": {
                     "type": "string",
                     "minLength": 8,
-                    "example": "\u003cPASSWORD\u003e!@#"
+                    "example": "Password1!@#"
                 }
             }
         },
@@ -705,12 +705,12 @@
                 "confirm": {
                     "type": "string",
                     "minLength": 8,
-                    "example": "\u003cPASSWORD\u003e!@#"
+                    "example": "Password1!@#"
                 },
                 "password": {
                     "type": "string",
                     "minLength": 8,
-                    "example": "\u003cPASSWORD\u003e!@#"
+                    "example": "Password1!@#"
                 }
             }
         },

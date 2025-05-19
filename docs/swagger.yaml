@@ -8,7 +8,7 @@ definitions:
       otp:
         type: string
       password:
-        example: <PASSWORD>!@#
+        example: Password1!@#
         minLength: 8
         type: string
     required:
@@ -93,11 +93,11 @@ definitions:
   dto.SetPasswordRequest:
     properties:
       confirm:
-        example: <PASSWORD>!@#
+        example: Password1!@#
         minLength: 8
         type: string
       password:
-        example: <PASSWORD>!@#
+        example: Password1!@#
         minLength: 8
         type: string
     required:
@@ -156,8 +156,8 @@ definitions:
 host: localhost:8080
 info:
   contact: {}
-  description: This is a sample server for Doc Management API.
-  title: Doc Management API
+  description: This is a documentation for PageCapApi
+  title: Page Capture API (PageCapApi)
   version: "1.0"
 paths:
   /auth/forgot-password:

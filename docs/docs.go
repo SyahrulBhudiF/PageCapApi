@@ -590,7 +590,7 @@ const docTemplate = `{
                 "password": {
                     "type": "string",
                     "minLength": 8,
-                    "example": "\u003cPASSWORD\u003e!@#"
+                    "example": "Password1!@#"
                 }
             }
         },
@@ -711,12 +711,12 @@ const docTemplate = `{
                 "confirm": {
                     "type": "string",
                     "minLength": 8,
-                    "example": "\u003cPASSWORD\u003e!@#"
+                    "example": "Password1!@#"
                 },
                 "password": {
                     "type": "string",
                     "minLength": 8,
-                    "example": "\u003cPASSWORD\u003e!@#"
+                    "example": "Password1!@#"
                 }
             }
         },
@@ -811,8 +811,8 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
-	Title:            "Doc Management API",
-	Description:      "This is a sample server for Doc Management API.",
+	Title:            "Page Capture API (PageCapApi)",
+	Description:      "This is a documentation for PageCapApi",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
