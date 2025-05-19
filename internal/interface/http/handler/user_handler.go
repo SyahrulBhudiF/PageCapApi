@@ -109,7 +109,7 @@ func (h *UserHandler) UpdateUserProfile(c *gin.Context) {
 	}
 	err = h.user.UpdateUserProfile(&body, &user, c.Request.Context())
 	if err != nil {
-		if util.ErrorInList(err, errorEntity.ErrUserNotFound) {
+		if util.ErrorInList(err, errorEntity.ErrUserNotFound, errorEntity.ErrCloudinaryUpload, errorEntity.ErrImageTooLarge) {
 			response.Unauthorized(c, "unauthorized", err)
 			return
 		}
