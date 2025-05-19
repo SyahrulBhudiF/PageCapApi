@@ -3,6 +3,7 @@ package core
 import (
 	docs "github.com/SyahrulBhudiF/Doc-Management.git/docs"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/core/module"
+	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/cloudinary"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/database"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/jwt"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/mail"
@@ -50,6 +51,9 @@ func Bootstrap() (*App, error) {
 		return "google", nil
 	}
 
+	// Cloudinary
+	cloudinaryService := cloudinary.NewCloudinary(cfg)
+
 	// Repositories
 	userRepo := persistence.NewUserRepository(db)
 
@@ -58,7 +62,7 @@ func Bootstrap() (*App, error) {
 
 	// Initialize Modules
 	authHandler := module.InitAuthModule(cfg, userRepo, jwtService, mailService, redisRepo)
-	userHandler := module.InitUserModule(cfg, userRepo, redisRepo)
+	userHandler := module.InitUserModule(cfg, userRepo, redisRepo, cloudinaryService)
 
 	// Router
 	docs.SwaggerInfo.BasePath = "/api/v1"

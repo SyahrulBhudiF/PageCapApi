@@ -11,6 +11,7 @@ import (
 	errorEntity "github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/error"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/shared/util"
 	"github.com/SyahrulBhudiF/Doc-Management.git/pkg/config"
+	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/sirupsen/logrus"
 	tm "time"
 )
@@ -18,13 +19,15 @@ import (
 type UserUseCase struct {
 	repo  repository.UserRepository
 	redis redis.Service
+	cloud *cloudinary.Cloudinary
 	cfg   *config.Config
 }
 
-func NewUserUseCase(repo repository.UserRepository, redis redis.Service, cfg *config.Config) *UserUseCase {
+func NewUserUseCase(repo repository.UserRepository, redis redis.Service, cfg *config.Config, cloud *cloudinary.Cloudinary) *UserUseCase {
 	return &UserUseCase{
 		repo:  repo,
 		redis: redis,
+		cloud: cloud,
 		cfg:   cfg,
 	}
 }

@@ -36,6 +36,10 @@ type ChangePasswordRequest struct {
 	NewPassword string `json:"new_password" binding:"required" example:"1Pass123!@#"`
 }
 
+type UpdateUserRequest struct {
+	Name string `json:"name" binding:"required" example:"John Doe"`
+}
+
 func (c ChangePasswordRequest) Validate() error {
 	if c.OldPassword == c.NewPassword {
 		return errors.New("new password must be different from old password")
