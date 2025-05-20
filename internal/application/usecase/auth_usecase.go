@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/markbates/goth"
 	"github.com/sirupsen/logrus"
+	"sync"
 	tm "time"
 )
 
@@ -92,38 +93,25 @@ func (a *AuthUseCase) Login(req *dto.LoginRequest, ctx context.Context) (*dto.Lo
 		return nil, err
 	}
 
-	errChan := make(chan error, 2)
-
 	accessExpire, _ := tm.ParseDuration(a.cfg.Jwt.AccessTokenExpire)
 	refreshExpire, _ := tm.ParseDuration(a.cfg.Jwt.RefreshTokenExpire)
+
 	jsonUser, err := json.Marshal(existingUser)
 	if err != nil {
 		logrus.Error("Failed to marshal user data")
 		return nil, err
 	}
 
-	go func(userUUID string, jsonUser []byte, expire tm.Duration, ch chan<- error) {
-		err := a.redis.Set(fmt.Sprintf("user:%s", userUUID), jsonUser, expire)
-		ch <- err
-	}(existingUser.UUID.String(), jsonUser, accessExpire, errChan)
-
-	go func(userUUID string, refreshHash string, expire tm.Duration, ch chan<- error) {
-		err := a.redis.Set(fmt.Sprintf("user_refresh:%s", userUUID), refreshHash, expire)
-		ch <- err
-	}(existingUser.UUID.String(), refreshHash, refreshExpire, errChan)
-
-	var combinedErr error
-	for i := 0; i < 2; i++ {
-		if err := <-errChan; err != nil {
-			logrus.Error("Failed to set token in Redis:", err)
-			combinedErr = err
-		}
+	err = a.redis.Set(fmt.Sprintf("user:%s", existingUser.UUID.String()), jsonUser, accessExpire)
+	if err != nil {
+		logrus.Error("Failed to set user in Redis:", err)
+		return nil, err
 	}
 
-	close(errChan)
-
-	if combinedErr != nil {
-		return nil, combinedErr
+	err = a.redis.Set(fmt.Sprintf("user_refresh:%s", existingUser.UUID.String()), refreshHash, refreshExpire)
+	if err != nil {
+		logrus.Error("Failed to set user_refresh in Redis:", err)
+		return nil, err
 	}
 
 	logrus.Info("User logged in successfully")
@@ -168,30 +156,18 @@ func (a *AuthUseCase) Logout(req *dto.LogoutRequest, user *entity.User, accessTo
 		return errorEntity.ErrTokenAlreadyBlacklisted
 	}
 
-	errCh := make(chan error, 2)
-
-	go func() {
-		expireDuration, _ := tm.ParseDuration(a.cfg.Jwt.RefreshTokenExpire)
-		errCh <- a.redis.Set(fmt.Sprintf("blacklist:%s", req.RefreshToken), "blacklisted", expireDuration)
-	}()
-
-	go func() {
-		expireDuration, _ := tm.ParseDuration(a.cfg.Jwt.AccessTokenExpire)
-		errCh <- a.redis.Set(fmt.Sprintf("blacklist:%s", accessToken), "blacklisted", expireDuration)
-	}()
-
-	var combinedErr error
-	for i := 0; i < 2; i++ {
-		if err := <-errCh; err != nil {
-			logrus.Error("Failed to set blacklist key:", err)
-			combinedErr = err
-		}
+	expireDuration, _ := tm.ParseDuration(a.cfg.Jwt.RefreshTokenExpire)
+	err = a.redis.Set(fmt.Sprintf("blacklist:%s", req.RefreshToken), "blacklisted", expireDuration)
+	if err != nil {
+		logrus.Error("Failed to set blacklist refresh token:", err)
+		return err
 	}
-	close(errCh)
 
-	if combinedErr != nil {
-		logrus.Error("Failed to set blacklist key")
-		return combinedErr
+	expireDuration, _ = tm.ParseDuration(a.cfg.Jwt.AccessTokenExpire)
+	err = a.redis.Set(fmt.Sprintf("blacklist:%s", accessToken), "blacklisted", expireDuration)
+	if err != nil {
+		logrus.Error("Failed to set blacklist access token:", err)
+		return err
 	}
 
 	logrus.Info("User logged out successfully")
@@ -315,30 +291,15 @@ func (a *AuthUseCase) VerifyEmail(req *dto.VerifyEmailRequest, ctx context.Conte
 		return err
 	}
 
-	errCh := make(chan error, 2)
-
-	go func() {
-		errCh <- a.redis.Delete(fmt.Sprintf("otp:%s", existingUser.UUID))
-	}()
-
-	go func() {
-		errCh <- a.redis.Delete(fmt.Sprintf("otp_limit:%s", existingUser.UUID))
-	}()
-
-	var combinedErr error
-	for i := 0; i < 2; i++ {
-		if err := <-errCh; err != nil {
-			logrus.Error("Failed to delete OTP related key from Redis:", err)
-			combinedErr = err
-		}
+	if err := a.redis.Delete(fmt.Sprintf("otp:%s", existingUser.UUID)); err != nil {
+		logrus.Error("Failed to delete otp key:", err)
+		return err
 	}
 
-	if combinedErr != nil {
-		logrus.Error("Failed to delete OTP related key from Redis")
-		return combinedErr
+	if err := a.redis.Delete(fmt.Sprintf("otp_limit:%s", existingUser.UUID)); err != nil {
+		logrus.Error("Failed to delete otp_limit key:", err)
+		return err
 	}
-
-	close(errCh)
 
 	logrus.Info("Email verified successfully")
 	return nil
@@ -362,38 +323,52 @@ func (a *AuthUseCase) ForgotPassword(req *dto.ForgotPasswordRequest, ctx context
 		return errorEntity.ErrInvalidOtp
 	}
 
-	hashedPassword := util.HashPassword(req.Password, a.cfg.Server.Salt)
-	existingUser.Password = hashedPassword
-	existingUser.UpdatedAt = tm.Now()
+	ctx, errHandler := util.NewErrorHandler(ctx)
 
-	err = a.repo.Update(ctx, existingUser)
-	if err != nil {
-		logrus.Error("Failed to update user password")
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		hashedPassword := util.HashPassword(req.Password, a.cfg.Server.Salt)
+		existingUser.Password = hashedPassword
+		existingUser.UpdatedAt = tm.Now()
+
+		if err := a.repo.Update(ctx, existingUser); err != nil {
+			logrus.Error("Failed to update user password")
+			errHandler.SetError(err)
+		}
+		jsonUser, err := json.Marshal(existingUser)
+		if err != nil {
+			logrus.Error("Failed to marshal user data")
+			errHandler.SetError(err)
+			return
+		}
+
+		if err := a.redis.Set(fmt.Sprintf("user:%s", existingUser.UUID), jsonUser, 0); err != nil {
+			logrus.Error("Failed to set user data in Redis:", err)
+			errHandler.SetError(err)
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if err := a.redis.Delete(fmt.Sprintf("otp:%s", existingUser.UUID)); err != nil {
+			logrus.Error("Failed to delete otp key from Redis:", err)
+			errHandler.SetError(err)
+			return
+		}
+		if err := a.redis.Delete(fmt.Sprintf("otp_limit:%s", existingUser.UUID)); err != nil {
+			logrus.Error("Failed to delete otp_limit key from Redis:", err)
+			errHandler.SetError(err)
+		}
+	}()
+
+	wg.Wait()
+
+	if err := errHandler.Err(); err != nil {
 		return err
 	}
-
-	errCh := make(chan error, 2)
-	go func() {
-		errCh <- a.redis.Delete(fmt.Sprintf("otp:%s", existingUser.UUID))
-	}()
-
-	go func() {
-		errCh <- a.redis.Delete(fmt.Sprintf("otp_limit:%s", existingUser.UUID))
-	}()
-
-	var combinedErr error
-	for i := 0; i < 2; i++ {
-		if err := <-errCh; err != nil {
-			logrus.Error("Failed to delete OTP related key from Redis:", err)
-			combinedErr = err
-		}
-	}
-	if combinedErr != nil {
-		logrus.Error("Failed to delete OTP related key from Redis")
-		return combinedErr
-	}
-
-	close(errCh)
 
 	logrus.Info("Password updated successfully")
 	return nil
@@ -445,8 +420,6 @@ func (a *AuthUseCase) GoogleLogin(g *goth.User, ctx context.Context) (*dto.Login
 		RefreshToken: refresh,
 	}
 
-	errChan := make(chan error, 2)
-
 	accessExpire, _ := tm.ParseDuration(a.cfg.Jwt.AccessTokenExpire)
 	refreshExpire, _ := tm.ParseDuration(a.cfg.Jwt.RefreshTokenExpire)
 	jsonUser, err := json.Marshal(user)
@@ -455,31 +428,19 @@ func (a *AuthUseCase) GoogleLogin(g *goth.User, ctx context.Context) (*dto.Login
 		return nil, err
 	}
 
-	go func(userUUID string, jsonUser []byte, expire tm.Duration, ch chan<- error) {
-		err := a.redis.Set(fmt.Sprintf("user:%s", userUUID), jsonUser, expire)
-		logrus.Info("Set user data in Redis")
-		ch <- err
-	}(user.UUID.String(), jsonUser, accessExpire, errChan)
-
-	go func(userUUID string, refreshHash string, expire tm.Duration, ch chan<- error) {
-		err := a.redis.Set(fmt.Sprintf("user_refresh:%s", userUUID), refreshHash, expire)
-		logrus.Info("Set refresh token in Redis")
-		ch <- err
-	}(user.UUID.String(), refreshHash, refreshExpire, errChan)
-
-	var combinedErr error
-	for i := 0; i < 2; i++ {
-		if err := <-errChan; err != nil {
-			logrus.Error("Failed to set token in Redis:", err)
-			combinedErr = err
-		}
+	err = a.redis.Set(fmt.Sprintf("user:%s", user.UUID.String()), jsonUser, accessExpire)
+	if err != nil {
+		logrus.Error("Failed to set user data in Redis:", err)
+		return nil, err
 	}
+	logrus.Info("Set user data in Redis")
 
-	close(errChan)
-
-	if combinedErr != nil {
-		return nil, combinedErr
+	err = a.redis.Set(fmt.Sprintf("user_refresh:%s", user.UUID.String()), refreshHash, refreshExpire)
+	if err != nil {
+		logrus.Error("Failed to set refresh token in Redis:", err)
+		return nil, err
 	}
+	logrus.Info("Set refresh token in Redis")
 
 	return loginReq, nil
 }

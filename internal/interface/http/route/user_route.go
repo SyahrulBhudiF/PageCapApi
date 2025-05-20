@@ -13,5 +13,6 @@ func RegisterUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler, m
 		user.GET("/profile", mm.EnsureAuthenticated(), userHandler.GetProfile)
 		user.PATCH("/change-password", mm.EnsureAuthenticated(), midleware.EnsureJsonValidRequest[dto.ChangePasswordRequest](), userHandler.ChangePassword)
 		user.PATCH("/profile", mm.EnsureAuthenticated(), midleware.EnsureMultipartValidRequest[dto.UpdateUserProfileRequest](), userHandler.UpdateUserProfile)
+		user.DELETE("/", mm.EnsureAuthenticated(), midleware.EnsureJsonValidRequest[dto.DeleteRequest](), userHandler.DeleteUser)
 	}
 }
