@@ -119,3 +119,42 @@ func (h *UserHandler) UpdateUserProfile(c *gin.Context) {
 
 	response.OK(c, "successfully update user profile", dto.ToUserResponse(user))
 }
+
+// DeleteUser godoc
+// @Summary      Delete User
+// @Description  Delete user account
+// @Tags         User
+// @Accept       json
+// @Produce      json
+// @Param        request  body  dto.DeleteRequest  true  "Delete User Request"
+// @Success 200 {object} response.Response "Successfully delete user account"
+// @Failure 400 {object} response.ErrorResponse "invalid request"
+// @Failure 401 {object} response.ErrorResponse "unauthorized"
+// @Failure 500 {object} response.ErrorResponse "internal server error"
+// @Security BearerAuth
+// @Router       /user [delete]
+func (h *UserHandler) DeleteUser(c *gin.Context) {
+	user, err := util.GetBody[entity.User](c, "user")
+	if err != nil {
+		response.BadRequest(c, "invalid request", err)
+		return
+	}
+
+	body, err := util.GetBody[dto.DeleteRequest](c, "body")
+	if err != nil {
+		response.BadRequest(c, "invalid request", err)
+		return
+	}
+
+	err = h.user.DeleteUser(&user, &body, c.Request.Context())
+	if err != nil {
+		if util.ErrorInList(err, errorEntity.ErrUserNotFound) {
+			response.Unauthorized(c, "unauthorized", err)
+			return
+		}
+		response.InternalServerError(c, err)
+		return
+	}
+
+	response.OK(c, "successfully delete user account", nil)
+}

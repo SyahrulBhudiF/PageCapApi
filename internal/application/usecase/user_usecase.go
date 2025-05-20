@@ -18,6 +18,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"io"
 	"strings"
+	"sync"
 	tm "time"
 )
 
@@ -151,5 +152,51 @@ func (c *UserUseCase) UpdateUserProfile(d *dto.UpdateUserProfileRequest, e *enti
 		return err
 	}
 
+	return nil
+}
+
+func (c *UserUseCase) DeleteUser(e *entity.User, body *dto.DeleteRequest, ctx context.Context) error {
+	ctx, errHandler := util.NewErrorHandler(ctx)
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+
+		if err := c.redis.Delete(fmt.Sprintf("user:%s", e.UUID)); err != nil {
+			logrus.WithError(err).Error("failed to delete user cache")
+			errHandler.SetError(err)
+			return
+		}
+
+		if err := c.redis.Delete(fmt.Sprintf("user_refresh:%s", e.UUID)); err != nil {
+			logrus.WithError(err).Error("failed to delete user refresh token cache")
+			errHandler.SetError(err)
+			return
+		}
+
+		if err := c.redis.Set(fmt.Sprintf("blacklist:%s", body.RefreshToken), "true", 0); err != nil {
+			logrus.WithError(err).Error("failed to blacklist refresh token")
+			errHandler.SetError(err)
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		if err := c.repo.Delete(ctx, e); err != nil {
+			logrus.WithError(err).Error("failed to delete user from database")
+			errHandler.SetError(err)
+		}
+	}()
+
+	wg.Wait()
+
+	if err := errHandler.Err(); err != nil {
+		return fmt.Errorf("failed to delete user: %w", err)
+	}
+
+	logrus.Info("user deleted successfully")
 	return nil
 }

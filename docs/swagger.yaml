@@ -12,6 +12,13 @@ definitions:
     - new_password
     - old_password
     type: object
+  dto.DeleteRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
   dto.ForgotPasswordRequest:
     properties:
       email:
@@ -157,6 +164,8 @@ definitions:
       password:
         type: string
       profile_picture:
+        type: string
+      public_id:
         type: string
       updated_at:
         type: string
@@ -537,6 +546,42 @@ paths:
       summary: Verify email
       tags:
       - Auth
+  /user:
+    delete:
+      consumes:
+      - application/json
+      description: Delete user account
+      parameters:
+      - description: Delete User Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.DeleteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully delete user account
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete User
+      tags:
+      - User
   /user/change-password:
     patch:
       consumes:

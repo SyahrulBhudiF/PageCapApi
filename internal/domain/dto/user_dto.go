@@ -45,6 +45,10 @@ type UpdateUserProfileRequest struct {
 	ProfilePicture *multipart.FileHeader `form:"profile_picture" binding:"required" swaggertype:"file"`
 }
 
+type DeleteRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
 func (r UpdateUserProfileRequest) Validate() error {
 	if r.ProfilePicture == nil {
 		return errors.New("profile_picture is required")
