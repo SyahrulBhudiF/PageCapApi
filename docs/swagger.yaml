@@ -1,5 +1,10 @@
 basePath: /api/v1
 definitions:
+  dto.ApiKeyResponse:
+    properties:
+      api_key:
+        type: string
+    type: object
   dto.ChangePasswordRequest:
     properties:
       new_password:
@@ -64,6 +69,23 @@ definitions:
         type: string
     required:
     - refresh_token
+    type: object
+  dto.PageCaptureRequest:
+    properties:
+      delaySeconds:
+        type: integer
+      fullPage:
+        type: boolean
+      height:
+        type: integer
+      isMobile:
+        type: boolean
+      url:
+        type: string
+      width:
+        type: integer
+    required:
+    - url
     type: object
   dto.RefreshTokenRequest:
     properties:
@@ -198,6 +220,40 @@ info:
   title: Page Capture API (PageCapApi)
   version: "1.0"
 paths:
+  /auth/api-key:
+    get:
+      consumes:
+      - application/json
+      description: Generate an API key for user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully generate API key
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ApiKeyResponse'
+              type: object
+        "400":
+          description: invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Generate API Key
+      tags:
+      - Auth
   /auth/forgot-password:
     post:
       consumes:
@@ -546,6 +602,45 @@ paths:
       summary: Verify email
       tags:
       - Auth
+  /page-capture/{key}:
+    post:
+      consumes:
+      - application/json
+      description: Get Page Capture
+      parameters:
+      - description: Key for Page Capture
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: Page Capture Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PageCaptureRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get Page Capture image
+          schema:
+            type: file
+        "400":
+          description: invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get Page Capture
+      tags:
+      - Page Capture
   /user:
     delete:
       consumes:

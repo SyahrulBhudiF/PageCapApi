@@ -20,5 +20,6 @@ func RegisterAuthRoutes(rg *gin.RouterGroup, authHandler *handler.AuthHandler, m
 		auth.GET("/google", authHandler.GoogleLogin)
 		auth.GET("/google/callback", authHandler.GoogleCallback)
 		auth.POST("/set-password", mm.EnsureAuthenticated(), midleware.EnsureJsonValidRequest[dto.SetPasswordRequest](), authHandler.SetPassword)
+		auth.GET("/api-key", mm.EnsureAuthenticated(), authHandler.GenerateApiKey)
 	}
 }

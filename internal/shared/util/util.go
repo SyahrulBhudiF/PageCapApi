@@ -3,6 +3,7 @@ package util
 import (
 	"bytes"
 	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
@@ -25,6 +26,14 @@ var (
 		},
 	}
 )
+
+func GenerateAPIKey(length int) (string, error) {
+	b := make([]byte, length)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(b), nil
+}
 
 func HashPassword(password string, salt string) string {
 	salted := password + salt

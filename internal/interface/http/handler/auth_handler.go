@@ -360,3 +360,35 @@ func (h *AuthHandler) SetPassword(c *gin.Context) {
 
 	response.OK(c, "Password set successfully", nil)
 }
+
+// GenerateApiKey godoc
+// @Summary Generate API Key
+// @Description Generate an API key for user
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Success 200 {object} response.Response{data=dto.ApiKeyResponse} "Successfully generate API key"
+// @Failure 400 {object} response.ErrorResponse "invalid request"
+// @Failure 401 {object} response.ErrorResponse "unauthorized"
+// @Failure 500 {object} response.ErrorResponse "internal server error"
+// @Security BearerAuth
+// @Router /auth/api-key [get]
+func (h *AuthHandler) GenerateApiKey(c *gin.Context) {
+	user, err := util.GetBody[entity.User](c, "user")
+	if err != nil {
+		response.BadRequest(c, "invalid request", err)
+		return
+	}
+
+	apiKey, err := h.auth.GenerateApiKey(&user)
+	if err != nil {
+		if util.ErrorInList(err, errorEntity.ErrUserNotFound) {
+			response.Unauthorized(c, "unauthorized", err)
+		} else {
+			response.InternalServerError(c, err)
+		}
+		return
+	}
+
+	response.OK(c, "Successfully generate API key", apiKey)
+}

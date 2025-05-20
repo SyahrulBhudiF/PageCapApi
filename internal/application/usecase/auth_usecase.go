@@ -476,3 +476,21 @@ func (a *AuthUseCase) SetPassword(req *dto.SetPasswordRequest, e *entity.User, c
 	logrus.Info("Password updated successfully")
 	return nil
 }
+
+func (a *AuthUseCase) GenerateApiKey(e *entity.User) (*dto.ApiKeyResponse, error) {
+	key, err := util.GenerateAPIKey(40)
+	if err != nil {
+		logrus.Error("Failed to generate API key:", err)
+		return nil, err
+	}
+
+	expire, _ := tm.ParseDuration(a.cfg.Server.ExpireKey)
+	redisKey := fmt.Sprintf("api_key:%s", key)
+	err = a.redis.Set(redisKey, e.UUID.String(), expire)
+	if err != nil {
+		logrus.Error("Failed to set API key in Redis:", err)
+		return nil, err
+	}
+
+	return &dto.ApiKeyResponse{ApiKey: key}, nil
+}

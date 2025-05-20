@@ -67,6 +67,7 @@ func NewPostgresDB(cfg *config.Config) (*gorm.DB, error) {
 func Migrate(db *gorm.DB) error {
 	err := db.Migrator().DropTable(
 		&entity.User{},
+		&entity.PageCapture{},
 	)
 	if err != nil {
 		return fmt.Errorf("failed to drop tables: %w", err)
@@ -74,6 +75,7 @@ func Migrate(db *gorm.DB) error {
 
 	if err := db.AutoMigrate(
 		&entity.User{},
+		&entity.PageCapture{},
 	); err != nil {
 		return fmt.Errorf("failed to migrate database: %w", err)
 	}

@@ -8,16 +8,18 @@ import (
 )
 
 type Route struct {
-	AuthHandler    *handler.AuthHandler
-	AuthMiddleware *midleware.AuthMiddleware
-	UserHandler    *handler.UserHandler
+	AuthHandler        *handler.AuthHandler
+	AuthMiddleware     *midleware.AuthMiddleware
+	UserHandler        *handler.UserHandler
+	PageCaptureHandler *handler.PageCaptureHandler
 }
 
-func NewRoute(authHandler *handler.AuthHandler, middleware *midleware.AuthMiddleware, UserHandler *handler.UserHandler) *Route {
+func NewRoute(authHandler *handler.AuthHandler, middleware *midleware.AuthMiddleware, UserHandler *handler.UserHandler, PageHandler *handler.PageCaptureHandler) *Route {
 	return &Route{
-		AuthHandler:    authHandler,
-		AuthMiddleware: middleware,
-		UserHandler:    UserHandler,
+		AuthHandler:        authHandler,
+		AuthMiddleware:     middleware,
+		UserHandler:        UserHandler,
+		PageCaptureHandler: PageHandler,
 	}
 }
 
@@ -37,6 +39,8 @@ func (r *Route) RegisterRoutes() *gin.Engine {
 		RegisterAuthRoutes(v1, r.AuthHandler, r.AuthMiddleware)
 		// User
 		RegisterUserRoutes(v1, r.UserHandler, r.AuthMiddleware)
+		// Page Capture
+		RegisterPageCaptureRoutes(v1, r.PageCaptureHandler, r.AuthMiddleware)
 	}
 
 	return router
