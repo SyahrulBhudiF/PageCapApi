@@ -78,7 +78,7 @@ func (c PageCaptureUseCase) PageCapture(body *dto.PageCaptureRequest, key string
 		params := util.UploadParamsPool.Get().(*uploader.UploadParams)
 		defer util.UploadParamsPool.Put(params)
 
-		publicID := fmt.Sprintf("profile_pictures/%s", uuid.NewString())
+		publicID := fmt.Sprintf("capture/%s", uuid.NewString())
 		overwrite := true
 		params.PublicID = publicID
 		params.Overwrite = &overwrite
