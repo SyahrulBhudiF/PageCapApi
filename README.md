@@ -81,8 +81,8 @@ Follow these steps:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/SyahrulBhudiF/Doc-Management.git # Assuming this is the correct repo URL
-   cd Doc-Management # Or the correct project directory name
+   git clone https://github.com/SyahrulBhudiF/PageCapApi.git
+   cd PageCapApi
    ```
 2. **Set up environment variables:**
    Copy the example environment file and update it with your configuration:
