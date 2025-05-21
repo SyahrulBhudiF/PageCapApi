@@ -10,6 +10,7 @@ import (
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/oauth2/google"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/persistence"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/redis"
+	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/rod"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/interface/http/midleware"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/interface/http/route"
 	"github.com/SyahrulBhudiF/Doc-Management.git/pkg/config"
@@ -54,8 +55,15 @@ func Bootstrap() (*App, error) {
 	// Cloudinary
 	cloudinaryService := cloudinary.NewCloudinary(cfg)
 
+	// Init Browser
+	browser, err := rod.InitBrowser()
+	if err != nil {
+		return nil, err
+	}
+
 	// Repositories
 	userRepo := persistence.NewUserRepository(db)
+	pageCaptureRepo := persistence.NewPageCaptureRepository(db)
 
 	// Initialize middleware
 	authMiddleware := midleware.NewAuthMiddleware(userRepo, redisRepo, jwtService, cfg)
@@ -63,10 +71,11 @@ func Bootstrap() (*App, error) {
 	// Initialize Modules
 	authHandler := module.InitAuthModule(cfg, userRepo, jwtService, mailService, redisRepo)
 	userHandler := module.InitUserModule(cfg, userRepo, redisRepo, cloudinaryService)
+	pageCaptureHandler := module.InitPageCaptureModule(cfg, pageCaptureRepo, redisRepo, cloudinaryService, browser)
 
 	// Router
 	docs.SwaggerInfo.BasePath = "/api/v1"
-	r := route.NewRoute(authHandler, authMiddleware, userHandler)
+	r := route.NewRoute(authHandler, authMiddleware, userHandler, pageCaptureHandler)
 	router := r.RegisterRoutes()
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 

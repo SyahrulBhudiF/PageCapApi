@@ -45,6 +45,7 @@ type ServerConfig struct {
 	Port        string
 	Environment string
 	Salt        string
+	ExpireKey   string
 }
 
 type JwtConfig struct {
@@ -84,6 +85,7 @@ func Load() (*Config, error) {
 			Port:        getEnv("SERVER_PORT", ""),
 			Environment: getEnv("ENVIRONMENT", ""),
 			Salt:        getEnv("SALT", ""),
+			ExpireKey:   getEnv("KEY_EXPIRATION", ""),
 		},
 		Jwt: JwtConfig{
 			AccessTokenSecret:  getEnv("ACCESS_TOKEN_SECRET", ""),

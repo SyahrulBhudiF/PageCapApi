@@ -55,6 +55,10 @@ type SetPasswordRequest struct {
 	Confirm  string `json:"confirm" binding:"required,min=8" example:"Password1!@#"`
 }
 
+type ApiKeyResponse struct {
+	ApiKey string `json:"api_key"`
+}
+
 func (r RegisterRequest) Validate() error {
 	re := regexp2.MustCompile(util.PasswordPattern, 0)
 	match, err := re.MatchString(r.Password)

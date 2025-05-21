@@ -15,6 +15,64 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/auth/api-key": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Generate an API key for user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Generate API Key",
+                "responses": {
+                    "200": {
+                        "description": "Successfully generate API key",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.ApiKeyResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/forgot-password": {
             "post": {
                 "description": "Reset password using OTP",
@@ -570,6 +628,65 @@ const docTemplate = `{
                 }
             }
         },
+        "/page-capture/{key}": {
+            "post": {
+                "description": "Get Page Capture",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Page Capture"
+                ],
+                "summary": "Get Page Capture",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Key for Page Capture",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Page Capture Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.PageCaptureRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully get Page Capture image",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/user": {
             "delete": {
                 "security": [
@@ -828,6 +945,14 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "dto.ApiKeyResponse": {
+            "type": "object",
+            "properties": {
+                "api_key": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.ChangePasswordRequest": {
             "type": "object",
             "required": [
@@ -919,6 +1044,32 @@ const docTemplate = `{
             "properties": {
                 "refresh_token": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.PageCaptureRequest": {
+            "type": "object",
+            "required": [
+                "url"
+            ],
+            "properties": {
+                "delaySeconds": {
+                    "type": "integer"
+                },
+                "fullPage": {
+                    "type": "boolean"
+                },
+                "height": {
+                    "type": "integer"
+                },
+                "isMobile": {
+                    "type": "boolean"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "width": {
+                    "type": "integer"
                 }
             }
         },
