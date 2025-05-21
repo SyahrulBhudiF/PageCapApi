@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/joho/godotenv"
 	"net/http"
 	"testing"
 	"time"
@@ -11,7 +12,38 @@ import (
 
 const baseURL = "http://localhost:8080/api/v1"
 
+func setupTestEnvironment(t *testing.T) {
+	envFiles := []string{
+		".env.test",
+	}
+
+	var loaded bool
+	for _, file := range envFiles {
+		if err := godotenv.Load(file); err == nil {
+			t.Logf("Loaded environment from %s", file)
+			loaded = true
+			break
+		}
+	}
+
+	if !loaded {
+		rootEnvFiles := []string{
+			"../.env",
+		}
+
+		for _, file := range rootEnvFiles {
+			if err := godotenv.Load(file); err == nil {
+				t.Logf("Loaded environment from %s", file)
+				loaded = true
+				break
+			}
+		}
+	}
+}
+
 func TestE2E(t *testing.T) {
+	setupTestEnvironment(t)
+
 	testEmail := fmt.Sprintf("testuser_@example.com")
 	testPassword := "Password123!"
 	testName := "Test User"

@@ -5,18 +5,23 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"regexp"
 	"testing"
 	"time"
 )
 
-const (
-	mailtrapAccountID = "1956740"
-	mailtrapInboxID   = "2950828"
-	mailtrapAPIToken  = "b5d22f00f2c7f6d90da907d59415ab5f"
+var (
+	mailtrapAccountID,
+	mailtrapInboxID,
+	mailtrapAPIToken string
 )
 
 func fetchMailtrapContent(t *testing.T, contentPath string) (string, error) {
+	if mailtrapAPIToken == "" || mailtrapAccountID == "" || mailtrapInboxID == "" {
+		return "", fmt.Errorf("mailtrap credentials are not set1")
+	}
+
 	if contentPath == "" {
 		return "", fmt.Errorf("content path is empty")
 	}
@@ -50,6 +55,14 @@ func fetchMailtrapContent(t *testing.T, contentPath string) (string, error) {
 }
 
 func getLatestOTPFromMailtrap(t *testing.T) (string, error) {
+	mailtrapAPIToken = os.Getenv("MAIL_API_KEY")
+	mailtrapAccountID = os.Getenv("MAIL_ACCOUNT")
+	mailtrapInboxID = os.Getenv("MAIL_INBOX_ID")
+
+	if mailtrapAPIToken == "" || mailtrapAccountID == "" || mailtrapInboxID == "" {
+		return "", fmt.Errorf("mailtrap credentials are not set")
+	}
+
 	listMessagesURL := fmt.Sprintf(
 		"https://mailtrap.io/api/accounts/%s/inboxes/%s/messages",
 		mailtrapAccountID,
