@@ -87,6 +87,21 @@ definitions:
     required:
     - url
     type: object
+  dto.PagesCaptureResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/entity.PageCapture'
+        type: array
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
   dto.RefreshTokenRequest:
     properties:
       refresh_token:
@@ -172,6 +187,33 @@ definitions:
     required:
     - email
     - otp
+    type: object
+  entity.PageCapture:
+    properties:
+      created_at:
+        type: string
+      delay_seconds:
+        type: integer
+      full_page:
+        type: boolean
+      height:
+        type: integer
+      image_path:
+        type: string
+      is_mobile:
+        type: boolean
+      public_id:
+        type: string
+      updated_at:
+        type: string
+      url:
+        type: string
+      user_id:
+        type: string
+      uuid:
+        type: string
+      width:
+        type: integer
     type: object
   entity.User:
     properties:
@@ -602,6 +644,65 @@ paths:
       summary: Verify email
       tags:
       - Auth
+  /page-capture:
+    get:
+      consumes:
+      - application/json
+      description: Get Page Capture
+      parameters:
+      - description: Search keyword (matches url, image_path, or public_id)
+        in: query
+        name: search
+        type: string
+      - description: 'Order by field (default: created_at)'
+        in: query
+        name: orderBy
+        type: string
+      - description: 'Sort direction: asc or desc (default: desc)'
+        in: query
+        name: sort
+        type: string
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: Filter by full_page (true or false)
+        in: query
+        name: fullPage
+        type: boolean
+      - description: Filter by is_mobile (true or false)
+        in: query
+        name: isMobile
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get Page Capture
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.PagesCaptureResponse'
+              type: object
+        "400":
+          description: invalid request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Page Capture
+      tags:
+      - Page Capture
   /page-capture/{key}:
     post:
       consumes:

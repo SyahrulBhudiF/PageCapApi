@@ -622,6 +622,102 @@
                 }
             }
         },
+        "/page-capture": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get Page Capture",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Page Capture"
+                ],
+                "summary": "Get Page Capture",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search keyword (matches url, image_path, or public_id)",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Order by field (default: created_at)",
+                        "name": "orderBy",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort direction: asc or desc (default: desc)",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number (default: 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by full_page (true or false)",
+                        "name": "fullPage",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by is_mobile (true or false)",
+                        "name": "isMobile",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully get Page Capture",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.PagesCaptureResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/page-capture/{key}": {
             "post": {
                 "description": "Get Page Capture",
@@ -1067,6 +1163,29 @@
                 }
             }
         },
+        "dto.PagesCaptureResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/entity.PageCapture"
+                    }
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "total_pages": {
+                    "type": "integer"
+                }
+            }
+        },
         "dto.RefreshTokenRequest": {
             "type": "object",
             "required": [
@@ -1188,6 +1307,47 @@
                 },
                 "otp": {
                     "type": "string"
+                }
+            }
+        },
+        "entity.PageCapture": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "delay_seconds": {
+                    "type": "integer"
+                },
+                "full_page": {
+                    "type": "boolean"
+                },
+                "height": {
+                    "type": "integer"
+                },
+                "image_path": {
+                    "type": "string"
+                },
+                "is_mobile": {
+                    "type": "boolean"
+                },
+                "public_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "uuid": {
+                    "type": "string"
+                },
+                "width": {
+                    "type": "integer"
                 }
             }
         },

@@ -11,5 +11,6 @@ func RegisterPageCaptureRoutes(rg *gin.RouterGroup, authHandler *handler.PageCap
 	r := rg.Group("/page-capture")
 	{
 		r.POST("/:key", midleware.EnsureJsonValidRequest[dto.PageCaptureRequest](), authHandler.PageCapture)
+		r.GET("/", mm.EnsureAuthenticated(), authHandler.GetPageCapture)
 	}
 }

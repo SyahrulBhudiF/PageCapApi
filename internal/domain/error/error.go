@@ -44,4 +44,5 @@ var (
 var (
 	ErrCloudinaryUpload = fmt.Errorf("cloudinary upload error")
 	ErrImageTooLarge    = fmt.Errorf("image too large")
+	ErrDataNotFound     = fmt.Errorf("data not found")
 )

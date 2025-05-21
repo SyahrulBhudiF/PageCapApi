@@ -20,6 +20,14 @@ type PageCaptureResponse struct {
 	Content  []byte `json:"content"`
 }
 
+type PagesCaptureResponse struct {
+	Data       []entity.PageCapture `json:"data"`
+	Total      int64                `json:"total"`
+	Page       int                  `json:"page"`
+	Limit      int                  `json:"limit"`
+	TotalPages int                  `json:"total_pages"`
+}
+
 func ConvertToScreenshotOptions(req *PageCaptureRequest) *rod.ScreenshotOptions {
 	return &rod.ScreenshotOptions{
 		URL:          req.Url,

@@ -7,6 +7,7 @@ import (
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/contract/redis"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/contract/repository"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/dto"
+	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/entity"
 	errorEntity "github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/error"
 	rodService "github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/rod"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/shared/util"
@@ -37,7 +38,7 @@ func NewPageCaptureUseCase(repo repository.PageCaptureRepository, redis redis.Se
 	}
 }
 
-func (c PageCaptureUseCase) PageCapture(body *dto.PageCaptureRequest, key string, ctx context.Context) (*dto.PageCaptureResponse, error) {
+func (c *PageCaptureUseCase) PageCapture(body *dto.PageCaptureRequest, key string, ctx context.Context) (*dto.PageCaptureResponse, error) {
 	redisKey := fmt.Sprintf("api_key:%s", key)
 	cachedKey, err := c.redis.Get(redisKey)
 	if err != nil {
@@ -106,4 +107,17 @@ func (c PageCaptureUseCase) PageCapture(body *dto.PageCaptureRequest, key string
 	}(buffer.Bytes(), *body, user.UUID)
 
 	return resp, nil
+}
+
+func (c *PageCaptureUseCase) GetPageCapture(e *entity.User, search string, orderBy string, sort string, page int, fullPage *bool, isMobile *bool) (*dto.PagesCaptureResponse, error) {
+	data, err := c.repo.GetPageCaptureByUserID(e.UUID.String(), search, orderBy, sort, page, fullPage, isMobile)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(data.Data) == 0 {
+		return nil, errorEntity.ErrDataNotFound
+	}
+
+	return data, nil
 }

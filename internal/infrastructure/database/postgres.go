@@ -65,6 +65,10 @@ func NewPostgresDB(cfg *config.Config) (*gorm.DB, error) {
 }
 
 func Migrate(db *gorm.DB) error {
+	if err := db.Exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`).Error; err != nil {
+		return fmt.Errorf("failed to create uuid-ossp extension: %w", err)
+	}
+
 	err := db.Migrator().DropTable(
 		&entity.User{},
 		&entity.PageCapture{},
