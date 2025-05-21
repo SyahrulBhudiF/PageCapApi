@@ -21,7 +21,7 @@ type PageCaptureResponse struct {
 }
 
 type PagesCaptureResponse struct {
-	Data       []entity.PageCapture `json:"data"`
+	Data       []entity.PageCapture `json:"history"`
 	Total      int64                `json:"total"`
 	Page       int                  `json:"page"`
 	Limit      int                  `json:"limit"`

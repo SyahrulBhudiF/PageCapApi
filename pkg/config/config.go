@@ -1,8 +1,9 @@
 package config
 
 import (
-	"github.com/joho/godotenv"
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -62,10 +63,13 @@ type RedisConfig struct {
 }
 
 type MailConfig struct {
-	Host     string
-	Port     string
-	Username string
-	Password string
+	Host        string
+	Port        string
+	Username    string
+	Password    string
+	MailApiKey  string
+	MailInboxId string
+	MailAccount string
 }
 
 func Load() (*Config, error) {
@@ -99,10 +103,13 @@ func Load() (*Config, error) {
 			Password: getEnv("REDIS_PASSWORD", ""),
 		},
 		Mail: MailConfig{
-			Host:     getEnv("MAIL_HOST", ""),
-			Port:     getEnv("MAIL_PORT", ""),
-			Username: getEnv("MAIL_USERNAME", ""),
-			Password: getEnv("MAIL_PASSWORD", ""),
+			Host:        getEnv("MAIL_HOST", ""),
+			Port:        getEnv("MAIL_PORT", ""),
+			Username:    getEnv("MAIL_USERNAME", ""),
+			Password:    getEnv("MAIL_PASSWORD", ""),
+			MailApiKey:  getEnv("MAIL_API", ""),
+			MailInboxId: getEnv("MAIL_INBOX_ID", ""),
+			MailAccount: getEnv("MAIL_ACCOUNT", ""),
 		},
 		Oauth2: Oauth2Config{
 			Google: GoogleConfig{

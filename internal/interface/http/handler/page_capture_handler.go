@@ -2,6 +2,9 @@ package handler
 
 import (
 	"fmt"
+	"net/http"
+	"strconv"
+
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/application/usecase"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/dto"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/entity"
@@ -9,8 +12,6 @@ import (
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/shared/util"
 	"github.com/SyahrulBhudiF/Doc-Management.git/pkg/response"
 	"github.com/gin-gonic/gin"
-	"net/http"
-	"strconv"
 )
 
 type PageCaptureHandler struct {
