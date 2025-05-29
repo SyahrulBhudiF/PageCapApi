@@ -138,7 +138,7 @@ func TestE2E(t *testing.T) {
 		}
 
 		var ok1, ok2 bool
-		accessToken, ok1 = dataMap["access_token"].(string) // ✅ BUKAN := tapi =
+		accessToken, ok1 = dataMap["access_token"].(string)
 		refreshToken, ok2 = dataMap["refresh_token"].(string)
 
 		if !ok1 || !ok2 {
