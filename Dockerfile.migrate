@@ -1,0 +1,11 @@
+FROM golang:alpine
+WORKDIR /app
+
+RUN apk add --no-cache git
+
+COPY go.mod go.sum .env ./
+RUN go mod download
+
+COPY . .
+
+CMD ["go", "run", "./cmd/migrate/main.go"]

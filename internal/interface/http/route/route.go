@@ -5,6 +5,7 @@ import (
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/interface/http/midleware"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 type Route struct {
@@ -32,6 +33,10 @@ func (r *Route) RegisterRoutes() *gin.Engine {
 	router.Use(CustomRecovery())
 	router.Use(Logger())
 	router.Use(gin.Recovery())
+
+	router.GET("/health", func(c *gin.Context) {
+		c.String(http.StatusOK, "ok")
+	})
 
 	v1 := router.Group("/api/v1")
 	{
