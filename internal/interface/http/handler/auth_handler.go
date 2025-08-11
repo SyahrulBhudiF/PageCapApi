@@ -83,6 +83,8 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
+	c.SetCookie("refresh_token", token.RefreshToken, 60*60*24*7, "/", "", false, true)
+
 	response.OK(c, "user logged in successfully", token)
 }
 
