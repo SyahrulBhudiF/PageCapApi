@@ -44,6 +44,10 @@ type VerifyEmailRequest struct {
 	Otp   string `json:"otp" binding:"required"`
 }
 
+type GoogleVerifyRequest struct {
+	Token string `json:"token" binding:"required"`
+}
+
 type ForgotPasswordRequest struct {
 	Email    string `json:"email" binding:"required" example:"john@example.com"`
 	Otp      string `json:"otp" binding:"required"`

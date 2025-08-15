@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/markbates/goth"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/api/idtoken"
 	"sync"
 	tm "time"
 )
@@ -493,4 +494,24 @@ func (a *AuthUseCase) GenerateApiKey(e *entity.User) (*dto.ApiKeyResponse, error
 	}
 
 	return &dto.ApiKeyResponse{ApiKey: key}, nil
+}
+
+func (a *AuthUseCase) GoogleVerify(ctx context.Context, googleIdToken string) (*dto.LoginResponse, error) {
+	googleClientID := a.cfg.Oauth2.Google.ClientID
+
+	payload, err := idtoken.Validate(ctx, googleIdToken, googleClientID)
+	if err != nil {
+		logrus.WithError(err).Error("Failed to validate Google ID token")
+		return nil, errorEntity.ErrInvalidToken
+	}
+
+	gothUser := goth.User{
+		Email:     payload.Claims["email"].(string),
+		Name:      payload.Claims["name"].(string),
+		FirstName: payload.Claims["given_name"].(string),
+		UserID:    payload.Subject,
+		Provider:  "google",
+	}
+
+	return a.GoogleLogin(&gothUser, ctx)
 }

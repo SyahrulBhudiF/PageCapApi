@@ -34,12 +34,11 @@ func (r *Route) RegisterRoutes() *gin.Engine {
 	router.Use(Logger())
 	router.Use(gin.Recovery())
 
-	router.GET("/health", func(c *gin.Context) {
-		c.String(http.StatusOK, "ok")
-	})
-
 	v1 := router.Group("/api/v1")
 	{
+		v1.GET("/health", func(c *gin.Context) {
+			c.String(http.StatusOK, "ok")
+		})
 		// Auth
 		RegisterAuthRoutes(v1, r.AuthHandler, r.AuthMiddleware)
 		// User

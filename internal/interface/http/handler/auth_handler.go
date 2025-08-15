@@ -11,6 +11,7 @@ import (
 	"github.com/SyahrulBhudiF/Doc-Management.git/pkg/response"
 	"github.com/gin-gonic/gin"
 	"github.com/markbates/goth/gothic"
+	"github.com/sirupsen/logrus"
 )
 
 type AuthHandler struct {
@@ -153,9 +154,9 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 // @Security BearerAuth
 // @Router /auth/refresh [post]
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
-	body, err := util.GetBody[dto.RefreshTokenRequest](c, "body")
+	refreshToken, err := c.Cookie("refresh_token")
 	if err != nil {
-		response.BadRequest(c, "invalid request", err)
+		response.Unauthorized(c, "refresh token not found", err)
 		return
 	}
 
@@ -165,7 +166,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	token, err := h.auth.RefreshToken(&body, &user)
+	token, err := h.auth.RefreshToken(&dto.RefreshTokenRequest{RefreshToken: refreshToken}, &user)
 	if err != nil {
 		if util.ErrorInList(err, errorEntity.ErrInvalidToken, errorEntity.ErrTokenAlreadyBlacklisted, errorEntity.ErrInvalidUser) {
 			response.Unauthorized(c, "unauthorized", err)
@@ -321,7 +322,39 @@ func (h *AuthHandler) GoogleCallback(c *gin.Context) {
 		return
 	}
 
+	c.SetCookie("refresh_token", token.RefreshToken, 60*60*24*7, "/", "", false, true)
+
 	response.OK(c, "Google login successful", token)
+}
+
+// GoogleVerifyToken godoc
+// @Summary Verify Google ID Token
+// @Description Verify a Google ID token from frontend and perform login
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param payload body GoogleVerifyRequest true "Google ID Token"
+// @Success 200 {object} response.Response{data=dto.LoginResponse} "Login successful"
+// @Failure 400 {object} response.ErrorResponse "Invalid request"
+// @Failure 401 {object} response.ErrorResponse "Unauthorized"
+// @Router /auth/google/verify [post]
+func (h *AuthHandler) GoogleVerifyToken(c *gin.Context) {
+	body, err := util.GetBody[dto.GoogleVerifyRequest](c, "body")
+	if err != nil {
+		response.BadRequest(c, "invalid request", err)
+		return
+	}
+
+	appToken, err := h.auth.GoogleVerify(c.Request.Context(), body.Token)
+	if err != nil {
+		response.Unauthorized(c, "authentication failed", err)
+		logrus.Error("GoogleVerifyToken error: ", err)
+		return
+	}
+
+	c.SetCookie("refresh_token", appToken.RefreshToken, 60*60*24*7, "/", "", false, true)
+
+	response.OK(c, "Google login successful", appToken)
 }
 
 // SetPassword godoc
