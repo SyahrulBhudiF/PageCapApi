@@ -76,7 +76,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	token, err := h.auth.Login(&req, c.Request.Context())
 	if err != nil {
-		if util.ErrorInList(err, errorEntity.ErrInvalidPassword, errorEntity.ErrUserNotFound, errorEntity.ErrEmailNotVerified) {
+		if util.ErrorInList(err, errorEntity.ErrInvalidPassword, errorEntity.ErrUserNotFound) {
 			response.Unauthorized(c, "unauthorized", err)
 		} else if errors.Is(err, errorEntity.ErrEmailNotVerified) {
 			response.Forbidden(c, "forbidden", err)
