@@ -5,6 +5,7 @@ import (
 	"github.com/SyahrulBhudiF/Doc-Management.git/pkg/response"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/sirupsen/logrus"
 	"reflect"
 )
 
@@ -29,6 +30,7 @@ func EnsureJsonValidRequest[T any]() gin.HandlerFunc {
 		body := new(T)
 
 		if err := c.ShouldBindJSON(body); err != nil {
+			logrus.Warning("Failed to bind JSON: ", err)
 			response.BadRequest(c, "invalid request", err)
 			c.Abort()
 			return
@@ -42,6 +44,7 @@ func EnsureJsonValidRequest[T any]() gin.HandlerFunc {
 				}
 				errStr += fmt.Sprintf("%s %s", e.Field(), e.Tag())
 			}
+			logrus.Warning("Validation errors: ", errStr)
 			response.BadRequest(c, "invalid request", fmt.Errorf(errStr))
 			c.Abort()
 			return
@@ -49,6 +52,7 @@ func EnsureJsonValidRequest[T any]() gin.HandlerFunc {
 
 		if custom, ok := any(body).(CustomValidatable); ok {
 			if err := custom.Validate(); err != nil {
+				logrus.Warning("Custom validation failed: ", err)
 				response.BadRequest(c, "invalid request", err)
 				c.Abort()
 				return

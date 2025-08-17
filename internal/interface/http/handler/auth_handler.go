@@ -78,6 +78,8 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	if err != nil {
 		if util.ErrorInList(err, errorEntity.ErrInvalidPassword, errorEntity.ErrUserNotFound, errorEntity.ErrEmailNotVerified) {
 			response.Unauthorized(c, "unauthorized", err)
+		} else if errors.Is(err, errorEntity.ErrEmailNotVerified) {
+			response.Forbidden(c, "forbidden", err)
 		} else {
 			response.InternalServerError(c, err)
 		}
