@@ -1,8 +1,9 @@
 package route
 
 import (
-	"github.com/gin-contrib/cors"
 	"time"
+
+	"github.com/gin-contrib/cors"
 )
 
 func CorsConfig() cors.Config {

@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
+	tm "time"
+
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/contract/jwt"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/contract/redis"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/contract/repository"
@@ -11,14 +14,13 @@ import (
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/entity"
 	errorEntity "github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/error"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/mail"
+	base "github.com/SyahrulBhudiF/Doc-Management.git/internal/shared/entity"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/shared/util"
 	"github.com/SyahrulBhudiF/Doc-Management.git/pkg/config"
 	"github.com/google/uuid"
 	"github.com/markbates/goth"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/idtoken"
-	"sync"
-	tm "time"
 )
 
 type AuthUseCase struct {
@@ -176,7 +178,7 @@ func (a *AuthUseCase) Logout(req *dto.LogoutRequest, user *entity.User, accessTo
 	return nil
 }
 
-func (a *AuthUseCase) RefreshToken(req *dto.RefreshTokenRequest, user *entity.User) (*dto.RefreshTokenResponse, error) {
+func (a *AuthUseCase) RefreshToken(req *dto.RefreshTokenRequest, ctx context.Context) (*dto.RefreshTokenResponse, error) {
 	isBlacklisted, err := a.redis.Exists(fmt.Sprintf("blacklist:%s", req.RefreshToken))
 	if err != nil {
 		logrus.Error("Failed to check if token is blacklisted")
@@ -192,6 +194,13 @@ func (a *AuthUseCase) RefreshToken(req *dto.RefreshTokenRequest, user *entity.Us
 	if err != nil {
 		logrus.Error("Invalid refresh token")
 		return nil, errorEntity.ErrInvalidToken
+	}
+
+	user := &entity.User{Entity: base.Entity{UUID: claims.UUID}}
+	err = a.repo.Find(ctx, user)
+	if err != nil {
+		logrus.Error("Invalid user")
+		return nil, errorEntity.ErrInvalidUser
 	}
 
 	if claims.UUID != user.UUID {
@@ -332,8 +341,13 @@ func (a *AuthUseCase) ForgotPassword(req *dto.ForgotPasswordRequest, ctx context
 	go func() {
 		defer wg.Done()
 		hashedPassword := util.HashPassword(req.Password, a.cfg.Server.Salt)
+		time := tm.Now()
 		existingUser.Password = hashedPassword
-		existingUser.UpdatedAt = tm.Now()
+		existingUser.UpdatedAt = time
+
+		if existingUser.EmailVerified == nil {
+			existingUser.EmailVerified = &time
+		}
 
 		if err := a.repo.Update(ctx, existingUser); err != nil {
 			logrus.Error("Failed to update user password")

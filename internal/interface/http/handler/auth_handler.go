@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"fmt"
+
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/application/usecase"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/dto"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/entity"
@@ -86,7 +87,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("refresh_token", token.RefreshToken, 60*60*24*7, "/", "", false, true)
+	c.SetCookie("refresh_token", token.RefreshToken, 60*60*24*7, "/", "localhost", false, true)
 
 	response.OK(c, "user logged in successfully", token)
 }
@@ -162,13 +163,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	user, err := util.GetBody[entity.User](c, "user")
-	if err != nil {
-		response.BadRequest(c, "invalid request", err)
-		return
-	}
-
-	token, err := h.auth.RefreshToken(&dto.RefreshTokenRequest{RefreshToken: refreshToken}, &user)
+	token, err := h.auth.RefreshToken(&dto.RefreshTokenRequest{RefreshToken: refreshToken}, c.Request.Context())
 	if err != nil {
 		if util.ErrorInList(err, errorEntity.ErrInvalidToken, errorEntity.ErrTokenAlreadyBlacklisted, errorEntity.ErrInvalidUser) {
 			response.Unauthorized(c, "unauthorized", err)

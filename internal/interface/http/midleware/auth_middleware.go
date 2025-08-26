@@ -3,6 +3,8 @@ package midleware
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/contract/jwt"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/contract/redis"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/domain/contract/repository"
@@ -13,7 +15,7 @@ import (
 	"github.com/SyahrulBhudiF/Doc-Management.git/pkg/config"
 	"github.com/SyahrulBhudiF/Doc-Management.git/pkg/response"
 	"github.com/gin-gonic/gin"
-	"strings"
+	"github.com/sirupsen/logrus"
 )
 
 type AuthMiddleware struct {
@@ -36,6 +38,7 @@ func (m *AuthMiddleware) EnsureAuthenticated() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
+			logrus.Warn("no auth header")
 			response.Unauthorized(c, "unauthorized", errorEntity.ErrAuthHeaderNotFound)
 			c.Abort()
 			return
@@ -43,6 +46,7 @@ func (m *AuthMiddleware) EnsureAuthenticated() gin.HandlerFunc {
 
 		parts := strings.Split(authHeader, "Bearer ")
 		if len(parts) != 2 {
+			logrus.Warn("invalid auth header")
 			response.Unauthorized(c, "unauthorized", errorEntity.ErrTokenNotFound)
 			c.Abort()
 			return
@@ -51,6 +55,7 @@ func (m *AuthMiddleware) EnsureAuthenticated() gin.HandlerFunc {
 		token := strings.TrimSpace(parts[1])
 
 		if existingToken, err := m.redis.Get(fmt.Sprintf("blacklist:%s", token)); err == nil && existingToken != "" {
+			logrus.Warn("token is blacklisted")
 			response.Unauthorized(c, "unauthorized", errorEntity.ErrTokenAlreadyBlacklisted)
 			c.Abort()
 			return
@@ -59,10 +64,12 @@ func (m *AuthMiddleware) EnsureAuthenticated() gin.HandlerFunc {
 		claims, err := m.jwt.ValidateToken(token, m.cfg.Jwt.AccessTokenSecret)
 		if err != nil {
 			if util.ErrorInList(err, errorEntity.ErrTokenExpired, errorEntity.ErrInvalidToken) {
+				logrus.Warn("invalid token: ", err)
 				response.Unauthorized(c, "unauthorized", err)
 				c.Abort()
 				return
 			} else {
+				logrus.Error("failed to validate token: ", err)
 				response.InternalServerError(c, err)
 				c.Abort()
 				return
@@ -87,6 +94,7 @@ func (m *AuthMiddleware) EnsureAuthenticated() gin.HandlerFunc {
 		}
 
 		if err := m.user.Find(c, &user); err != nil {
+			logrus.Warn("failed to find user: ", err)
 			response.Unauthorized(c, "unauthorized", errorEntity.ErrUserNotFound)
 			c.Abort()
 			return
@@ -94,6 +102,7 @@ func (m *AuthMiddleware) EnsureAuthenticated() gin.HandlerFunc {
 
 		jsonUser, _ := json.Marshal(user)
 		if err := m.redis.Set(fmt.Sprintf("user:%s", claims.UUID), jsonUser, 0); err != nil {
+			logrus.Error("failed to set user: ", err)
 			response.InternalServerError(c, err)
 			c.Abort()
 			return
