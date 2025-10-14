@@ -1,6 +1,8 @@
 package core
 
 import (
+	"net/http"
+
 	docs "github.com/SyahrulBhudiF/Doc-Management.git/docs"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/core/module"
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/infrastructure/cloudinary"
@@ -18,7 +20,6 @@ import (
 	"github.com/markbates/goth/gothic"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"net/http"
 )
 
 type App struct {

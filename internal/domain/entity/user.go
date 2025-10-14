@@ -1,8 +1,9 @@
 package entity
 
 import (
-	"github.com/SyahrulBhudiF/Doc-Management.git/internal/shared/entity"
 	"time"
+
+	"github.com/SyahrulBhudiF/Doc-Management.git/internal/shared/entity"
 )
 
 type User struct {
@@ -22,6 +23,21 @@ func NewUser(email string, password string, name string, profilePicture string) 
 		Name:           name,
 		ProfilePicture: profilePicture,
 	}, nil
+}
+
+func ToUserResponse(user *User) *User {
+	return &User{
+		Entity: entity.Entity{
+			UUID:      user.UUID,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		},
+		Email:          user.Email,
+		Name:           user.Name,
+		ProfilePicture: user.ProfilePicture,
+		PublicId:       user.PublicId,
+		EmailVerified:  user.EmailVerified,
+	}
 }
 
 func (u *User) TableName() string {

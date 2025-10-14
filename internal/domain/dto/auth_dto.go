@@ -2,6 +2,8 @@ package dto
 
 import (
 	"errors"
+	"time"
+
 	"github.com/SyahrulBhudiF/Doc-Management.git/internal/shared/util"
 	"github.com/dlclark/regexp2"
 )
@@ -16,6 +18,17 @@ type RegisterRequest struct {
 type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email" example:"john@example.com"`
 	Password string `json:"password" binding:"required,min=8" example:"Pass123!@#"`
+}
+
+type RegisterResponse struct {
+	UUID           string     `json:"uuid"`
+	Email          string     `json:"email"`
+	Name           string     `json:"name"`
+	ProfilePicture string     `json:"profile_picture"`
+	PublicId       string     `json:"public_id"`
+	EmailVerified  *time.Time `json:"email_verified"`
+	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at"`
 }
 
 type LoginResponse struct {

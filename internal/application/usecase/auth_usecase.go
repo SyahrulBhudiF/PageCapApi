@@ -41,7 +41,7 @@ func NewAuthUseCase(repo repository.UserRepository, jwt jwt.Service, redis redis
 	}
 }
 
-func (a *AuthUseCase) Register(req *dto.RegisterRequest, ctx context.Context) (*entity.User, error) {
+func (a *AuthUseCase) Register(req *dto.RegisterRequest, ctx context.Context) (*dto.RegisterResponse, error) {
 	existingUser, _ := a.repo.FindByEmail(ctx, req.Email)
 
 	if existingUser != nil {
@@ -70,7 +70,16 @@ func (a *AuthUseCase) Register(req *dto.RegisterRequest, ctx context.Context) (*
 	}
 
 	logrus.Info("User created successfully")
-	return newUser, nil
+	return &dto.RegisterResponse{
+		UUID:           newUser.UUID.String(),
+		Email:          newUser.Email,
+		Name:           newUser.Name,
+		ProfilePicture: newUser.ProfilePicture,
+		PublicId:       newUser.PublicId,
+		EmailVerified:  newUser.EmailVerified,
+		CreatedAt:      newUser.CreatedAt,
+		UpdatedAt:      newUser.UpdatedAt,
+	}, nil
 }
 
 func (a *AuthUseCase) Login(req *dto.LoginRequest, ctx context.Context) (*dto.LoginResponse, error) {
